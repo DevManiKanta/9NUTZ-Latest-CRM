@@ -1493,13 +1493,13 @@ const InventoryManager: React.FC = () => {
                           onClick={() => openEdit(it)}
                           className="px-3 py-1 rounded border inline-flex items-center gap-2 hover:bg-slate-100 transition text-sm"
                         >
-                          <Edit3 className="w-4 h-4" /> Edit
+                          <Edit3 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => confirmDelete(it)}
                           className="px-3 py-1 rounded bg-red-600 text-white inline-flex items-center gap-2 hover:bg-red-700 transition text-sm"
                         >
-                          <Trash2 className="w-4 h-4" /> Delete
+                          <Trash2 className="w-4 h-4" /> 
                         </button>
                       </div>
                     </td>

@@ -41,8 +41,8 @@ import SlocStock from "./pages/CommingSoon";
 import Settlement from "./pages/Settlement";
 import PreShortSupply from "./pages/PreShortSupply";
 import SalesBanner from "./pages/SalesBanner";
-import GstReport from "./pages/GstReport";
-import GstProfitability from "./pages/GstProfitability";
+import SocialMedia from "./pages/SocialMedia";
+import Reports from "./pages/Reports";
 import GstCacheReport from "./pages/GstCacheReport";
 import NewVendor from "./pages/NewVendor";
 import VendorList from "./pages/VendorList";
@@ -393,21 +393,21 @@ const App = () => (
               }
             />
             <Route
-              path="/Gst/GstProfitability"
+              path="/Reports"
               element={
                 <ProtectedRoute>
                   <DashboardLayout>
-                    <GstProfitability />
+                    <Reports />
                   </DashboardLayout>
                 </ProtectedRoute>
               }
             />
              <Route
-              path="/Gst/GstReport"
+              path="/Social-Media"
               element={
                 <ProtectedRoute>
                   <DashboardLayout>
-                    <GstReport />
+                    <SocialMedia />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

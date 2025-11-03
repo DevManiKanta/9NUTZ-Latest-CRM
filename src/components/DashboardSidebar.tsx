@@ -254,6 +254,7 @@ import {
   ChevronDown,
   ShoppingCart,
   Image,
+  Instagram,
   FileText,
   DollarSign,
   Tag,
@@ -267,10 +268,6 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-/**
- * Primary navigation items.
- * Icons assigned semantically based on item label.
- */
 const navigationItems = [
   { id: "dashboard", label: "Dashboard", path: "/dashboard", icon: Home },
   { id: "products", label: "Products", path: "/products", icon: Package },
@@ -279,15 +276,16 @@ const navigationItems = [
   { id: "expenses-summary", label: "Expenses Summary", path: "/expensesummary", icon: DollarSign },
   { id: "purchase-details", label: "Purchase Details", path: "/purchase-details", icon: FileText },
   { id: "orders", label: "Orders", path: "/orders", icon: ShoppingCart },
-  // { id: "banners", label: "Banners", path: "/BannersPage", icon: Image },
   { id: "inventory-management", label: "Inventory Management", path: "/sku/Inventory-Management", icon: ClipboardList },
   { id: "vendor-management", label: "Vendor Management", path: "/sku/vendor-Management", icon: Building2 },
-    { id: "Sales-Banner", label: "Sales-Banner", path: "/Sales-Banner", icon: Building2 },
+    { id: "Reports", label: "Reports", path: "/Reports", icon: Image },
 ];
 
 const settingsChildren = [
   // { id: "gst", label: "GST", path: "/sku/list" },
   { id: "site-settings", label: "Site Settings", path: "/Site-Settings" },
+  { id: "Sales-Banner", label: "Sales-Banner", path: "/Sales-Banner", icon: Building2 },
+  { id: "Social-Media", label: "Social-Media", path: "/Social-Media", icon:Instagram  },
 ];
 
 export const DashboardSidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
