@@ -1756,7 +1756,6 @@ export default function POS(): JSX.Element {
               <div className="text-sm text-slate-600">Discount</div>
               <div className="text-right font-medium">- ₹ {discountAmount.toFixed(2)}</div>
             </div>
-
             <div className="flex items-center gap-2 mb-3">
               <select value={discount.type} onChange={(e) => setDiscount((d) => ({ ...d, type: e.target.value as "fixed" | "percent" }))} className="p-2 border rounded bg-slate-50">
                 <option value="fixed">Fixed</option>

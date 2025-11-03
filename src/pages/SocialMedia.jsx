@@ -108,16 +108,14 @@ const SocialMedia = () => {
             </button>
           ))}
         </div>
-
-        {/* Content */}
-        <div className="p-6 bg-gray-50 rounded-xl border border-gray-200">
+    <div className="space-y-4 w-full">
           {/* FACEBOOK */}
           {activeTab === "facebook" && (
-            <div className="space-y-4">
+            <div className="space-y-4" >
               <h3 className="text-xl font-semibold text-blue-700 flex items-center gap-2">
                 <Facebook className="w-5 h-5" /> Facebook Page
               </h3>
-              <div className="mt-3 rounded-lg overflow-hidden border bg-white">
+              <div className="mt-3 rounded-lg overflow-hidden border bg-white ">
                 <iframe
                   title="Facebook Page"
                   src={fbEmbedUrl(FB_PAGE_URL, embedSize.width, embedSize.height)}
