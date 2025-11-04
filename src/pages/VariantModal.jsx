@@ -103,7 +103,7 @@ export default function VariantModal({ isOpen, open, onClose, initial = {} }) {
   if (!visible) return null;
 
   const modal = (
-     <div className="fixed inset-0 z-60 flex items-center justify-center px-4">
+     <div className="fixed inset-0 z-60 flex items-center justify-center px-4" style={{width:"50%"}}>
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
         role="dialog"

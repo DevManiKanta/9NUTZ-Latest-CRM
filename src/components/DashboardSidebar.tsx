@@ -286,6 +286,7 @@ const settingsChildren = [
   { id: "site-settings", label: "Site Settings", path: "/Site-Settings" },
   { id: "Sales-Banner", label: "Sales-Banner", path: "/Sales-Banner", icon: Building2 },
   { id: "Social-Media", label: "Social-Media", path: "/Social-Media", icon:Instagram  },
+  { id: "Shop-Settings", label: "Shop-Settings", path: "/Shop-Settings", icon:Building2  },
 ];
 
 export const DashboardSidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {

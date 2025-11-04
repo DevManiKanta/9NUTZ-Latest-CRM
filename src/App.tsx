@@ -47,7 +47,7 @@ import GstCacheReport from "./pages/GstCacheReport";
 import NewVendor from "./pages/NewVendor";
 import VendorList from "./pages/VendorList";
 import Profilepage from "./pages/ProfilePage";
-import RevisitList from "./pages/RevisitList";
+import ShopSettings from "./pages/ShopSettings";
 import CategoryManagement from "./pages/CategoryManagement";
 import MasterManagement from "./pages/MasterManagement";
 import RouteManagement from "./pages/RouteManagement";
@@ -450,11 +450,11 @@ const App = () => (
               }
             />
              <Route
-              path="/RevisitList"
+              path="/Shop-Settings"
               element={
                 <ProtectedRoute>
                   <DashboardLayout>
-                    <RevisitList />
+                    <ShopSettings />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

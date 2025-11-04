@@ -4331,7 +4331,7 @@ import { Plus, RefreshCw, Trash2, Edit3, Eye, X } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import api from "../api/axios";
 import { IMAGES } from "../assets/images";
-// import VariantModal from "./VariantModal"
+import VariantModal from "./VariantModal"
 
 /* ---------- types ---------- */
 type Product = {
@@ -4395,9 +4395,24 @@ export default function Products(): JSX.Element {
 
   // ---------- VARIANTS state (ADDED) ----------
   // Each variant entry shape: { id?: string|number, value: string, price: string, imageFile?: File|null, imagePreview?: string }
-  const [variantSizes, setVariantSizes] = useState<Array<any>>([]);
-  const [variantColors, setVariantColors] = useState<Array<any>>([]);
-  const [variantWeights, setVariantWeights] = useState<Array<any>>([]);
+  // const [variantSizes, setVariantSizes] = useState<Array<any>>([]);
+  // const [variantColors, setVariantColors] = useState<Array<any>>([]);
+  // const [variantWeights, setVariantWeights] = useState<Array<any>>([]);
+  // --- Variant UI state (add near other useState declarations) ---
+const [variantTab, setVariantTab] = useState<"size" | "color" | "weight">("size");
+
+type VariantEntry = {
+  id?: string | number | undefined;
+  value: string;
+  price: string;
+  imageFile?: File | null;
+  imagePreview?: string;
+};
+
+const [variantSizes, setVariantSizes] = useState<VariantEntry[]>([]);
+const [variantColors, setVariantColors] = useState<VariantEntry[]>([]);
+const [variantWeights, setVariantWeights] = useState<VariantEntry[]>([]);
+
 
   // Variant modal state
   const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
@@ -4419,6 +4434,8 @@ export default function Products(): JSX.Element {
   const [catLoading, setCatLoading] = useState(false);
   const [catFile, setCatFile] = useState<File | null>(null);
   const catFileRef = useRef<HTMLInputElement | null>(null);
+
+  
 
   // Server limit = 2048 KB => 2 * 1024 * 1024 bytes
   const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
@@ -5600,168 +5617,384 @@ export default function Products(): JSX.Element {
                   <X className="h-5 w-5" />
                 </button>
               </div>
+                 <div className="p-6" style={{display: "flex", flexDirection: "row" }}>
+  <form onSubmit={handleSubmit} className="space-y-4 w-full">
+    {/* Row-based layout: each field wrapper is 30% width, wraps to next line on small screens */}
+    <div className="flex flex-wrap gap-4">
+      {/* Product Name */}
+      <div className="w-[30%] min-w-[220px]">
+        <label className="block text-sm font-medium mb-1">
+          Product Name <span className="text-red-500">*</span>
+        </label>
+        <input
+          ref={firstInputRef}
+          value={form.name}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          className={`block w-full border rounded-md p-2 focus:outline-none focus:ring ${errors.name ? "border-red-400" : "border-slate-200"}`}
+          placeholder="e.g. Shimla Apple"
+        />
+        {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+      </div>
 
-              <div className="p-6">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Product Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      ref={firstInputRef}
-                      value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      className={`block w-full border rounded-md p-2 focus:outline-none focus:ring ${errors.name ? "border-red-400" : "border-slate-200"}`}
-                      placeholder="e.g. Shimla Apple"
-                    />
-                    {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
-                  </div>
+      {/* Price */}
+      <div className="w-[30%] min-w-[220px]">
+        <label className="block text-sm font-medium mb-1">
+          Price <span className="text-red-500">*</span>
+        </label>
+        <input
+          value={form.price}
+          onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+          className={`block w-full border rounded-md p-2 ${errors.price ? "border-red-400" : "border-slate-200"}`}
+          placeholder="1000.00"
+        />
+        {errors.price && <p className="text-xs text-red-500">{errors.price}</p>}
+      </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Price <span className="text-red-500">*</span></label>
-                      <input
-                        value={form.price}
-                        onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                        className={`block w-full border rounded-md p-2 ${errors.price ? "border-red-400" : "border-slate-200"}`}
-                        placeholder="1000.00"
-                      />
-                      {errors.price && <p className="text-xs text-red-500">{errors.price}</p>}
-                    </div>
+      {/* Category */}
+      <div className="w-[30%] min-w-[220px]">
+        <label className="block text-sm font-medium mb-1">
+          Category <span className="text-red-500">*</span>
+        </label>
+        <select
+          value={form.category}
+          onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+          className={`block w-full border rounded-md p-2 ${errors.category ? "border-red-400" : "border-slate-200"}`}
+        >
+          <option value="">-- Select category (id) --</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
+      </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Category <span className="text-red-500">*</span></label>
-                      <select
-                        value={form.category}
-                        onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                        className={`block w-full border rounded-md p-2 ${errors.category ? "border-red-400" : "border-slate-200"}`}
-                      >
-                        <option value="">-- Select category (id) --</option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Grams</label>
-                      <input value={form.grams} onChange={(e) => setForm((f) => ({ ...f, grams: e.target.value }))} className="block w-full border rounded-md p-2" placeholder="750" />
-                    </div>
+      {/* Grams */}
+      <div className="w-[30%] min-w-[220px]">
+        <label className="block text-sm font-medium mb-1">Grams</label>
+        <input
+          value={form.grams}
+          onChange={(e) => setForm((f) => ({ ...f, grams: e.target.value }))}
+          className="block w-full border rounded-md p-2"
+          placeholder="750"
+        />
+      </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Discount Price</label>
-                      <input value={form.discount_price} onChange={(e) => setForm((f) => ({ ...f, discount_price: e.target.value }))} className="block w-full border rounded-md p-2" placeholder="800.00" />
-                    </div>
-                  </div>
+      {/* Discount Price */}
+      <div className="w-[30%] min-w-[220px]">
+        <label className="block text-sm font-medium mb-1">Discount Price</label>
+        <input
+          value={form.discount_price}
+          onChange={(e) => setForm((f) => ({ ...f, discount_price: e.target.value }))}
+          className="block w-full border rounded-md p-2"
+          placeholder="800.00"
+        />
+      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Description<span className="text-red-500">*</span></label>
-                    <input
-                      ref={descInputRef}
-                      value={form.description}
-                      onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                      className={`block w-full border rounded-md p-2 focus:outline-none focus:ring ${errors.description ? "border-red-400" : "border-slate-200"}`}
-                      placeholder="e.g. Description"
-                    />
-                    {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
-                  </div>
+      {/* Video URL */}
+      <div className="w-[30%] min-w-[220px]">
+        <label className="block text-sm font-medium mb-1">Video URL</label>
+        <input
+          value={form.video_url}
+          onChange={(e) => setForm((f) => ({ ...f, video_url: e.target.value }))}
+          className="block w-full border rounded-md p-2"
+          placeholder="https://www.youtube.com/watch?v="
+        />
+      </div>
 
-                  {/* NEW FIELD: Video URL */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Video URL</label>
-                    <input
-                      value={form.video_url}
-                      onChange={(e) => setForm((f) => ({ ...f, video_url: e.target.value }))}
-                      className="block w-full border rounded-md p-2"
-                      placeholder="https://www.youtube.com/watch?v="
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Upload Image</label>
-                    <input type="file" accept="image/*" onChange={handleImageChange} className="block w-full text-sm" />
-                    {errors.image && <p className="text-xs text-red-500 mt-1">{errors.image}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Additional images(Atleast 4  images )</label>
-                    <input type="file" accept="image/*" multiple onChange={handleAdditionalImagesChange} className="block w-full text-sm" />
-                    {existingExtraImages.length > 0 && (
-                      <div className="mt-3 grid grid-cols-4 gap-2">
-                        {existingExtraImages.map((img, idx) => (
-                          <div key={String(img.id ?? img.url)} className="relative w-full h-20 rounded-md overflow-hidden border">
-                            <img
-                              src={/^https?:\/\//.test(img.url) ? img.url : img.url}
-                              alt={`extra-${idx}`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).onerror = null;
-                                (e.currentTarget as HTMLImageElement).src = IMAGES.DummyImage;
-                              }}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeExistingExtraByIndex(idx)}
-                              className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white"
-                              title="Remove"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+      {/* Description (30% box) */}
+      <div className="w-[30%] min-w-[220px]">
+        <label className="block text-sm font-medium mb-1">
+          Description <span className="text-red-500">*</span>
+        </label>
+        <input
+          ref={descInputRef}
+          value={form.description}
+          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+          className={`block w-full border rounded-md p-2 focus:outline-none focus:ring ${errors.description ? "border-red-400" : "border-slate-200"}`}
+          placeholder="e.g. Description"
+        />
+        {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
+      </div>
 
-                    {/* show newly selected extra images previews */}
-                    {newExtraPreviews.length > 0 && (
-                      <div className="mt-3 grid grid-cols-4 gap-2">
-                        {newExtraPreviews.map((p, idx) => (
-                          <div key={idx} className="relative w-full h-20 rounded-md overflow-hidden border">
-                            <img src={p} alt={`new-extra-${idx}`} className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => removeNewExtraAt(idx)}
-                              className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white"
-                              title="Remove"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+      {/* Upload Image */}
+      <div className="w-[30%] min-w-[220px]">
+        <label className="block text-sm font-medium mb-1">Upload Image</label>
+        <input type="file" accept="image/*" onChange={handleImageChange} className="block w-full text-sm" />
+        {errors.image && <p className="text-xs text-red-500 mt-1">{errors.image}</p>}
+      </div>
 
-                  {/* Manage Variants Button */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Variants</label>
-                    <div className="flex items-center gap-3">
-                    {/* <Button
-  type="button"
-  onClick={() => setIsVariantModalOpen(true)}
-  className="inline-flex items-center gap-2"
->
-  Manage Variants
-</Button> */}
+      {/* Additional images */}
+      <div className="w-[30%] min-w-[220px]">
+        <label className="block text-sm font-medium mb-1">Additional images (At least 4 images)</label>
+        <input type="file" accept="image/*" multiple onChange={handleAdditionalImagesChange} className="block w-full text-sm" />
+      </div>
 
-                      <div className="text-sm text-slate-500">
-                        {variantSizes.length + variantWeights.length + variantColors.length} variant options configured
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-3">
-                    <Button variant="ghost" onClick={() => { resetForm(); setIsDrawerOpen(false); }}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isSubmitting} className="bg-chart-primary hover:bg-chart-primary/90">
-                      {isSubmitting ? (isEditMode ? "Saving..." : "Adding...") : isEditMode ? "Save" : "Add Product"}
-                    </Button>
-                  </div>
-                </form>
+      {/* (Optional) show extra-images previews area spanning full width: */}
+      <div className="w-full mt-2">
+        {existingExtraImages.length > 0 && (
+          <div className="mt-3 grid grid-cols-4 gap-2">
+            {existingExtraImages.map((img, idx) => (
+              <div key={String(img.id ?? img.url)} className="relative w-full h-20 rounded-md overflow-hidden border">
+                <img
+                  src={/^https?:\/\//.test(img.url) ? img.url : img.url}
+                  alt={`extra-${idx}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).onerror = null;
+                    (e.currentTarget as HTMLImageElement).src = IMAGES.DummyImage;
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeExistingExtraByIndex(idx)}
+                  className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white"
+                  title="Remove"
+                >
+                  <X className="w-3 h-3" />
+                </button>
               </div>
+            ))}
+          </div>
+        )}
+
+        {newExtraPreviews.length > 0 && (
+          <div className="mt-3 grid grid-cols-4 gap-2">
+            {newExtraPreviews.map((p, idx) => (
+              <div key={idx} className="relative w-full h-20 rounded-md overflow-hidden border">
+                <img src={p} alt={`new-extra-${idx}`} className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeNewExtraAt(idx)}
+                  className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white"
+                  title="Remove"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="w-[50%] mt-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setVariantTab?.("size")}
+              className={`px-3 py-1 rounded-md text-sm ${variantTab === "size" ? "bg-slate-900 text-white" : "bg-slate-50"}`}
+            >
+              Sizes
+            </button>
+            <button
+              type="button"
+              onClick={() => setVariantTab?.("color")}
+              className={`px-3 py-1 rounded-md text-sm ${variantTab === "color" ? "bg-slate-900 text-white" : "bg-slate-50"}`}
+            >
+              Colors
+            </button>
+            <button
+              type="button"
+              onClick={() => setVariantTab?.("weight")}
+              className={`px-3 py-1 rounded-md text-sm ${variantTab === "weight" ? "bg-slate-900 text-white" : "bg-slate-50"}`}
+            >
+              Weights
+            </button>
+          </div>
+
+          <div className="flex-1" />
+
+          <button
+            type="button"
+            onClick={() => addVariantEntry?.(variantTab || "size")}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border hover:bg-slate-50 text-sm"
+          >
+            <Plus className="w-3 h-3" /> Add {variantTab === "weight" ? "weight" : (variantTab || "Size").slice(0,1).toUpperCase() + (variantTab || "size").slice(1)}
+          </button>
+        </div>
+
+        {/* Render entries for the active variant tab in the same 30% column grid */}
+        <div className="flex flex-wrap gap-4">
+          {variantTab === "size" &&
+            (variantSizes.length === 0 ? (
+              <div className="text-sm text-slate-500 p-2">No sizes yet. Click "Add" to add size variants.</div>
+            ) : (
+              variantSizes.map((s, idx) => (
+                <div key={`size-${idx}`} className="w-[100%] min-w-[220px] border rounded p-3 grid gap-2">
+  {/* Size and Price side by side */}
+  <div className="flex items-center gap-3">
+    <div className="flex-1">
+      <label className="text-xs text-slate-600">Size</label>
+      <select
+        value={s.value}
+        onChange={(e) => handleVariantChange?.("size", idx, "value", e.target.value)}
+        className="block w-full border rounded p-2 text-sm"
+      >
+        <option value="">Select Size</option>
+        <option value="S">S</option>
+        <option value="M">M</option>
+        <option value="L">L</option>
+        <option value="XL">XL</option>
+        <option value="XXL">XXL</option>
+      </select>
+    </div>
+
+    <div className="flex-1">
+      <label className="text-xs text-slate-600">Price</label>
+      <input
+        value={s.price}
+        onChange={(e) => handleVariantChange?.("size", idx, "price", e.target.value)}
+        placeholder="₹ 0.00"
+        className="block w-full border rounded p-2 text-sm"
+      />
+    </div>
+  </div>
+
+  {/* Image uploader below */}
+  <label className="text-xs text-slate-600 mt-2">Image</label>
+  <div className="flex items-center gap-2">
+    <div className="w-12 h-12 rounded overflow-hidden border bg-slate-100 flex items-center justify-center">
+      {s.imagePreview ? (
+        <img src={s.imagePreview as string} alt={`size-${idx}`} className="w-full h-full object-cover" />
+      ) : (
+        <div className="text-xs text-slate-400">No</div>
+      )}
+    </div>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(ev) => handleVariantImageChange?.("size", idx, ev)}
+      className="text-xs"
+    />
+  </div>
+
+  {/* Delete button */}
+  <div className="text-right mt-2">
+    <button
+      type="button"
+      onClick={() => removeVariantEntry?.("size", idx)}
+      className="inline-flex items-center justify-center p-1 rounded border hover:bg-red-50"
+    >
+      <Trash2 className="w-4 h-4 text-red-600" />
+    </button>
+  </div>
+</div>
+
+              ))
+            ))}
+
+          {variantTab === "color" &&
+            (variantColors.length === 0 ? (
+              <div className="text-sm text-slate-500 p-2">No colors yet. Click "Add" to add color variants.</div>
+            ) : (
+              variantColors.map((c, idx) => (
+                <div key={`color-${idx}`} className="w-[100%] min-w-[220px] border rounded p-3 grid gap-2">
+  {/* Color and Price side by side */}
+  <div className="flex items-center gap-3">
+    <div className="flex-1">
+      <label className="text-xs text-slate-600">Color</label>
+      <select
+        value={c.value}
+        onChange={(e) => handleVariantChange?.("color", idx, "value", e.target.value)}
+        className="block w-full border rounded p-2 text-sm"
+      >
+        <option value="">Select Color</option>
+        <option value="Red">Red</option>
+        <option value="Blue">Blue</option>
+        <option value="Green">Green</option>
+      </select>
+    </div>
+
+    <div className="flex-1">
+      <label className="text-xs text-slate-600">Price</label>
+      <input
+        value={c.price}
+        onChange={(e) => handleVariantChange?.("color", idx, "price", e.target.value)}
+        placeholder="₹ 0.00"
+        className="block w-full border rounded p-2 text-sm"
+      />
+    </div>
+  </div>
+
+  {/* Image uploader */}
+  <label className="text-xs text-slate-600 mt-2">Image</label>
+  <div className="flex items-center gap-2">
+    <div className="w-12 h-12 rounded overflow-hidden border bg-slate-100 flex items-center justify-center">
+      {c.imagePreview ? (
+        <img src={c.imagePreview as string} alt={`color-${idx}`} className="w-full h-full object-cover" />
+      ) : (
+        <div className="text-xs text-slate-400">No</div>
+      )}
+    </div>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(ev) => handleVariantImageChange?.("color", idx, ev)}
+      className="text-xs"
+    />
+  </div>
+
+  {/* Delete button */}
+  <div className="text-right mt-2">
+    <button
+      type="button"
+      onClick={() => removeVariantEntry?.("color", idx)}
+      className="inline-flex items-center justify-center p-1 rounded border hover:bg-red-50"
+    >
+      <Trash2 className="w-4 h-4 text-red-600" />
+    </button>
+  </div>
+</div>
+
+              ))
+            ))}
+
+          {variantTab === "weight" &&
+            (variantWeights.length === 0 ? (
+              <div className="text-sm text-slate-500 p-2">No weights yet. Click "Add" to add weight variants.</div>
+            ) : (
+              variantWeights.map((w, idx) => (
+                <div key={`weight-${idx}`} className="w-[100%] min-w-[220px] border rounded p-3 grid gap-2">
+                  <label className="text-xs text-slate-600">Weight</label>
+                  <input
+                    value={w.value}
+                    onChange={(e) => handleVariantChange?.("weight", idx, "value", e.target.value)}
+                    placeholder="e.g. 250g, 1kg"
+                    className="block w-full border rounded p-2 text-sm"
+                  />
+                  <label className="text-xs text-slate-600">Price</label>
+                  <input
+                    value={w.price}
+                    onChange={(e) => handleVariantChange?.("weight", idx, "price", e.target.value)}
+                    placeholder="₹ 0.00"
+                    className="block w-full border rounded p-2 text-sm"
+                  />
+                  <div className="text-right mt-2">
+                    <button type="button" onClick={() => removeVariantEntry?.("weight", idx)} className="inline-flex items-center justify-center p-1 rounded border hover:bg-red-50">
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ))}
+        </div>
+      </div>
+    </div>
+
+    {/* Footer buttons — aligned to right */}
+    <div className="flex items-center justify-end gap-3 mt-4">
+      <Button variant="ghost" onClick={() => { resetForm(); setIsDrawerOpen(false); }}>
+        Cancel
+      </Button>
+      <Button type="submit" disabled={isSubmitting} className="bg-chart-primary hover:bg-chart-primary/90">
+        {isSubmitting ? (isEditMode ? "Saving..." : "Adding...") : isEditMode ? "Save" : "Add Product"}
+      </Button>
+    </div>
+  </form>
+</div>
+
+
             </aside>
           </div>
         )}
@@ -5899,7 +6132,7 @@ export default function Products(): JSX.Element {
         )}
 
         {isViewOpen && selectedProduct && (
-          <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Product details">
+          <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Product details" style={{width:"50%"}}>
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsViewOpen(false)} />
 
             <aside ref={viewDrawerRef} tabIndex={-1} className="fixed top-0 right-0 h-screen bg-white dark:bg-slate-900 shadow-2xl overflow-auto rounded-l-2xl md:w-96 w-full p-6">
@@ -6022,7 +6255,7 @@ export default function Products(): JSX.Element {
           </div>
         )}
         {/* Variant modal */}
-        {/* <VariantModal open={isVariantModalOpen} onClose={() => setIsVariantModalOpen(false)} /> */}
+        <VariantModal open={isVariantModalOpen} onClose={() => setIsVariantModalOpen(false)} />
 
         {/* ---------- Delete confirmation mini-modal ---------- */}
         {confirmDeleteId != null && (
