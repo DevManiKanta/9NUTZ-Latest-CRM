@@ -1583,11 +1583,14 @@ const InventoryManager: React.FC = () => {
                   className={`w-full p-2 border rounded ${formErrors.product_id ? "border-red-400" : ""}`}
                 >
                   <option value="">-- select product --</option>
-                  {productOptions.map((opt) => (
-                    <option key={opt.id} value={opt.id}>
-                      {opt.label}
-                    </option>
-                  ))}
+                       {productOptions.map((v, index) => {
+  return (
+    <option key={v.id} value={v.id}>
+      {v.raw?.name || "Unnamed Vendor"}
+    </option>
+  );
+})}
+
                 </select>
                 {productOptions.length === 0 ? (
                   <div className="text-xs text-slate-500 mt-1">{productsLoading ? "Loading products…" : "No products available."}</div>
@@ -1629,7 +1632,7 @@ const InventoryManager: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Vendor (optional)</label>
+                <label className="block text-sm font-medium mb-1">Vendor</label>
                 <select
                   ref={vendorRef}
                   name="vendor_id"
@@ -1638,11 +1641,15 @@ const InventoryManager: React.FC = () => {
                   className="w-full p-2 border rounded"
                 >
                   <option value="">-- select vendor (optional) --</option>
-                  {vendorOptions.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.label}
-                    </option>
-                  ))}
+                    {vendorOptions.map((v, index) => {
+  return (
+    <option key={v.id} value={v.id}>
+      {v.raw?.name || "Unnamed Vendor"}
+    </option>
+  );
+})}
+
+
                 </select>
                 {vendorOptions.length === 0 ? (
                   <div className="text-xs text-slate-500 mt-1">{vendorsLoading ? "Loading vendors…" : "No vendors available."}</div>
@@ -1653,7 +1660,7 @@ const InventoryManager: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Note (optional)</label>
+                <label className="block text-sm font-medium mb-1">Note</label>
                 <textarea
                   ref={noteRef}
                   name="note"

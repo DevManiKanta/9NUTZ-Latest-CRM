@@ -148,7 +148,6 @@ function fmtCurrency(n) {
 }
 
 const Dashboard = () => {
-  console.log("API",api)
   // default range = last 30 days
   const today = new Date();
   const defaultTo = new Date(today);
@@ -268,7 +267,7 @@ const Dashboard = () => {
   const Yearly = YearlyChart;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-4">
       <Toaster position="top-right" reverseOrder={false} />
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Welcome!</h1>

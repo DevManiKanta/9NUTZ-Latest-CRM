@@ -1204,8 +1204,6 @@ const Employees: React.FC = () => {
 
       const body = await res.json();
       // helpful debug: copy-paste this output if you need more mapping
-      console.log("EMPLOYEES BODY (raw):", body);
-
       let list: any[] = [];
 
       if (Array.isArray(body)) {
@@ -1299,7 +1297,6 @@ const submitEmployee = async (ev?: React.FormEvent) => {
     address: form.address?.trim() || undefined,
   };
 
-  console.log("SUBMIT PAYLOAD:", payload);
 
   setIsSubmitting(true);
   try {

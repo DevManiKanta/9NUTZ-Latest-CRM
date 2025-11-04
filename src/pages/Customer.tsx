@@ -1576,23 +1576,31 @@ export default function POS(): JSX.Element {
                               <div className="text-xs text-slate-600">Stock: {p.stock ?? "-"}</div>
                             </div>
 
-                            <div className="mt-3 space-y-2">
-                              {inCartQty === 0 ? (
-                                <button onClick={() => addToCart(p, 1)} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-emerald-600 text-white text-sm">
-                                  <Plus className="w-4 h-4" /> Add
-                                </button>
-                              ) : (
-                                <div className="w-full inline-flex items-center justify-between gap-2 border rounded-md px-2 py-1.5">
-                                  <button onClick={() => dec(p.id)} className="p-1.5 rounded"><Minus className="w-4 h-4" /></button>
-                                  <div className="text-sm font-medium">{inCartQty}</div>
-                                  <button onClick={() => inc(p.id)} className="p-1.5 rounded"><Plus className="w-4 h-4" /></button>
-                                </div>
-                              )}
-                              <div className="grid grid-cols-2 gap-2">
-                                {/* <button onClick={() => openAdminEdit(p)} className="px-3 py-2 rounded-md border text-sm">Edit</button>
-                                <button onClick={() => requestDelete(p.id!, p.name)} className="px-3 py-2 rounded-md border text-sm">Delete</button> */}
-                              </div>
-                            </div>
+                            {p.stock <= 0 ? (
+  <p style={{ color: "red" }}>Out of Stock</p>
+) : (
+  <div className="mt-3 space-y-2">
+    {inCartQty === 0 ? (
+      <button
+        onClick={() => addToCart(p, 1)}
+        className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-emerald-600 text-white text-sm"
+      >
+        <Plus className="w-4 h-4" /> Add
+      </button>
+    ) : (
+      <div className="w-full inline-flex items-center justify-between gap-2 border rounded-md px-2 py-1.5">
+        <button onClick={() => dec(p.id)} className="p-1.5 rounded">
+          <Minus className="w-4 h-4" />
+        </button>
+        <div className="text-sm font-medium">{inCartQty}</div>
+        <button onClick={() => inc(p.id)} className="p-1.5 rounded">
+          <Plus className="w-4 h-4" />
+        </button>
+      </div>
+    )}
+  </div>
+)}
+
                           </div>
                         </article>
                       );
@@ -1622,7 +1630,7 @@ export default function POS(): JSX.Element {
                               <div className="text-base font-semibold">₹ {Number(p.price).toFixed(2)}</div>
                               <div className="text-xs text-slate-600">Stock: {p.stock ?? "-"}</div>
                             </div>
-
+``
                             <div className="mt-3 space-y-2">
                               {inCartQty === 0 ? (
                                 <button onClick={() => addToCart(p, 1)} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-emerald-600 text-white text-sm">
@@ -1756,29 +1764,55 @@ export default function POS(): JSX.Element {
               <div className="text-sm text-slate-600">Discount</div>
               <div className="text-right font-medium">- ₹ {discountAmount.toFixed(2)}</div>
             </div>
-            <div className="flex items-center gap-2 mb-3">
-              <select value={discount.type} onChange={(e) => setDiscount((d) => ({ ...d, type: e.target.value as "fixed" | "percent" }))} className="p-2 border rounded bg-slate-50">
-                <option value="fixed">Fixed</option>
-                <option value="percent">Percent</option>
-              </select>
-              <input type="number" min={0} value={discount.value} onChange={(e) => setDiscount((d) => ({ ...d, value: Number(e.target.value || 0) }))} className="p-2 border rounded w-36" placeholder={discount.type === "fixed" ? "₹ amount" : "%"} />
-              <div className="ml-auto text-sm text-slate-600">Adjust discount</div>
-            </div>
+            <div className="flex items-center gap-4 mb-3 flex-wrap">
+  {/* left: discount controls */}
+  <div className="flex items-center gap-4">
+    <select
+      value={discount.type}
+      onChange={(e) =>
+        setDiscount((d) => ({ ...d, type: e.target.value as "fixed" | "percent" }))
+      }
+      className="p-2 border rounded bg-slate-50"
+      aria-label="Discount type"
+    >
+      <option value="fixed">Fixed</option>
+      <option value="percent">Percent</option>
+    </select>
 
-            <div className="mb-3 w-[30%]">
-              <label className="text-sm text-slate-600 block mb-1">GST %</label>
-              <select value={gstPercent} onChange={(e) => setGstPercent(Number(e.target.value))} disabled={gstLoading} className="p-2 border rounded bg-slate-50 w-full">
-                {gstLoading && <option>Loading...</option>}
-                {!gstLoading && gstOptions.length > 0 && gstOptions.map((gst: any) => (
-                  <option key={gst.id} value={gst.percentage}>{`${gst.percentage}%`}</option>
-                ))}
-                {!gstLoading && gstOptions.length === 0 && (
-                  <>
-                    <option value={18}>18%</option>
-                  </>
-                )}
-              </select>
-            </div>
+    <input
+      type="number"
+      min={0}
+      value={discount.value}
+      onChange={(e) => setDiscount((d) => ({ ...d, value: Number(e.target.value || 0) }))}
+      className="p-2 border rounded w-36"
+      placeholder={discount.type === "fixed" ? "₹ amount" : "%"}
+      aria-label="Discount value"
+    />
+  </div>
+
+  {/* right: GST column pinned to the end */}
+  <div className="ml-auto mb-0 w-36 sm:w-40">
+    <label className="text-sm text-slate-600 block mb-1">GST %</label>
+    <select
+      value={gstPercent}
+      onChange={(e) => setGstPercent(Number(e.target.value))}
+      disabled={gstLoading}
+      className="p-2 border rounded bg-slate-50 w-full"
+      aria-label="GST percent"
+    >
+      {gstLoading && <option>Loading...</option>}
+      {!gstLoading &&
+        gstOptions.length > 0 &&
+        gstOptions.map((gst: any) => (
+          <option key={gst.id} value={gst.percentage}>
+            {`${gst.percentage}%`}
+          </option>
+        ))}
+
+      {!gstLoading && gstOptions.length === 0 && <option value={18}>18%</option>}
+    </select>
+  </div>
+</div>
 
             <div className="flex items-center justify-between mb-4">
               <div className="text-lg font-medium">Total</div>

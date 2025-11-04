@@ -30,7 +30,6 @@ export default function OrderReport() {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Replace with API call later
-    console.log("Submit date range", { startDate, endDate });
   };
 
   return (
