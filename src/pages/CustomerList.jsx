@@ -295,7 +295,7 @@ function formatOrderItems(items = []) {
 
 const CompactCustomerCard = ({ customer, onView }) => {
   return (
-    <div className="bg-white w-[50%] rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-150 p-3 flex items-center gap-3">
+<div className="bg-white w-[260px] rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-150 p-3 flex items-center gap-3">
       <img
         src={avatarDataUri(customer.name, customer.avatarColor ?? "#6b7280")}
         alt={customer.name}
@@ -434,7 +434,7 @@ export default function CustomerList() {
       ) : error ? (
         <div className="p-6 text-center text-red-600">Error loading orders: {String(error)}</div>
       ) : (
-  <div className="grid grid-cols-4">
+  <div style={{display:"flex",alignItems:"center",gap:10}}>
           {filtered.length === 0 ? (
             <div className="col-span-full p-4 text-center text-slate-500 rounded-md border bg-white shadow-sm">
               No customers found.
