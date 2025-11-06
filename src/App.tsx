@@ -45,7 +45,7 @@ import SocialMedia from "./pages/SocialMedia";
 import Reports from "./pages/Reports";
 import GstCacheReport from "./pages/GstCacheReport";
 import NewVendor from "./pages/NewVendor";
-import VendorList from "./pages/VendorList";
+import VendorList from "./pages/CustomerList";
 import Profilepage from "./pages/ProfilePage";
 import ShopSettings from "./pages/ShopSettings";
 import CategoryManagement from "./pages/CategoryManagement";
@@ -55,6 +55,7 @@ import AssetsManagement from "./pages/AssetsManagement";
 import ConsolidatedVehiclePay from "./pages/ConsolidatedVehiclePay";
 import RentVehiclePaymentsList from "./pages/RentVehiclePaymentsList";
 import FranchiseRequests from "./pages/FranchiseRequests";
+import TestProducts from "./pages/TestProducts";
 import CommingSoon from "./pages/CommingSoon";
 import Bannerspage from "./pages/Bannerspage"
 import PublicRoute from "@/components/auth/ProtectedRoute";
@@ -91,7 +92,8 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardLayout>
-                    <Products />
+                    {/* <Products /> */}
+                    <TestProducts/>
                   </DashboardLayout>
                 </ProtectedRoute>
               }
@@ -426,7 +428,7 @@ const App = () => (
               }
             />
              <Route
-              path="/VendorList"
+              path="/CustomerList"
               element={
                 <ProtectedRoute>
                   <DashboardLayout>

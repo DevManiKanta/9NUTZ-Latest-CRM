@@ -744,8 +744,9 @@ import { toast } from "react-hot-toast";
 import { setSiteSettings } from "../redux/slices/sitesettings";
 import GstManagement from "../pages/SkuList";
 import Bannerspage from "../pages/BannersPage";
+import api from "../api/axios"
 
-const LOCAL_API_BASE = "https://9nutsapi.nearbydoctors.in/public/api/"; // adjust if needed
+const LOCAL_API_BASE = api.defaults.baseURL;
 const TOKEN_KEY = "token"; // adjust if your app uses a different key
 
 export default function ProfilePage({ initialUser = null, initialOrders = [] }) {
@@ -910,7 +911,7 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
     setIsFetching(true);
     const loadingId = toast.loading("Loading settings...");
     try {
-      const res = await fetch(`${LOCAL_API_BASE}settings`, {
+      const res = await fetch(`${LOCAL_API_BASE}/settings`, {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -1127,7 +1128,7 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
       if (logoFile) fd.append("logo", logoFile);
       if (faviconFile) fd.append("favicon", faviconFile);
 
-      const res = await fetch(`${LOCAL_API_BASE}admin/settings/update`, {
+      const res = await fetch(`${LOCAL_API_BASE}/admin/settings/update`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

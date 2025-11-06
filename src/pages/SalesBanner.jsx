@@ -428,8 +428,9 @@ import {
   Loader2,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import api from "../api/axios"
 
-const API_BASE = "https://9nutsapi.nearbydoctors.in/public/api";
+const API_BASE = api.defaults.baseURL
 
 function getToken() {
   // adjust if you use a different storage key

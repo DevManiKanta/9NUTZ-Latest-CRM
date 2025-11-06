@@ -1,19 +1,9 @@
+
 import React, { useRef, useEffect, useState } from "react";
 
 /**
- * Editor.jsx
- *
- * Reusable WYSIWYG editor modal.
- *
- * Props:
- * - open: boolean
- * - initialHtml: string
- * - onClose: () => void
- * - onSave: (htmlString) => void
- *
- * Uses document.execCommand for simple editing (images, links, basic formatting).
+ * Toolbar button
  */
-
 function ToolbarButton({ onClick, title, children, active = false }) {
   return (
     <button
@@ -23,7 +13,9 @@ function ToolbarButton({ onClick, title, children, active = false }) {
       title={title}
       className={
         "inline-flex items-center justify-center px-2 py-1 rounded-sm text-sm border " +
-        (active ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50")
+        (active
+          ? "bg-indigo-600 text-white border-indigo-600"
+          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50")
       }
     >
       {children}
@@ -31,21 +23,43 @@ function ToolbarButton({ onClick, title, children, active = false }) {
   );
 }
 
-export default function Editor({ open, initialHtml = "", onClose = () => {}, onSave = (html) => {} }) {
+/**
+ * Editor component
+ */
+export default function Editor({
+  open,
+  initialHtml = "",
+  onClose = () => {},
+  onSave = (html) => {},
+}) {
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
   const savedRangeRef = useRef(null);
-  const [localHtml, setLocalHtml] = useState(initialHtml);
+  const [localHtml, setLocalHtml] = useState(initialHtml ?? "");
+  const lastProgrammaticHtmlRef = useRef(null);
 
+  // When initialHtml prop changes, update internal html and write to DOM once
   useEffect(() => {
     setLocalHtml(initialHtml ?? "");
+    if (editorRef.current) {
+      editorRef.current.innerHTML = initialHtml ?? "<p></p>";
+      lastProgrammaticHtmlRef.current = initialHtml ?? "<p></p>";
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialHtml]);
 
+  // When open becomes true, ensure DOM contains the right HTML and focus
   useEffect(() => {
-    // when opened, focus the editor
     if (open && editorRef.current) {
-      setTimeout(() => editorRef.current.focus(), 60);
+      const desired = localHtml || "<p></p>";
+      if (lastProgrammaticHtmlRef.current !== desired) {
+        editorRef.current.innerHTML = desired;
+        lastProgrammaticHtmlRef.current = desired;
+      }
+      // focus slightly later so modal open animation (if any) finishes
+      setTimeout(() => editorRef.current.focus(), 40);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const saveSelection = () => {
@@ -54,8 +68,8 @@ export default function Editor({ open, initialHtml = "", onClose = () => {}, onS
       if (sel && sel.rangeCount > 0) {
         savedRangeRef.current = sel.getRangeAt(0).cloneRange();
       }
-    } catch (err) {
-      // ignore
+    } catch {
+      savedRangeRef.current = null;
     }
   };
 
@@ -68,10 +82,20 @@ export default function Editor({ open, initialHtml = "", onClose = () => {}, onS
         sel.addRange(savedRangeRef.current);
       } else if (editorRef.current) {
         editorRef.current.focus();
+        const range = document.createRange();
+        range.selectNodeContents(editorRef.current);
+        range.collapse(false);
+        sel.addRange(range);
       }
-    } catch (err) {
+    } catch {
       // ignore
     }
+  };
+
+  const syncStateFromDOM = () => {
+    const html = editorRef.current?.innerHTML ?? "";
+    lastProgrammaticHtmlRef.current = html;
+    setLocalHtml(html);
   };
 
   const exec = (cmd, value = null) => {
@@ -90,8 +114,10 @@ export default function Editor({ open, initialHtml = "", onClose = () => {}, onS
         console.error("exec error", e);
       }
     } finally {
+      // read DOM and keep state in sync (we don't re-write DOM here)
+      syncStateFromDOM();
       editorRef.current && editorRef.current.focus();
-      setLocalHtml(editorRef.current?.innerHTML ?? "");
+      saveSelection();
     }
   };
 
@@ -119,7 +145,8 @@ export default function Editor({ open, initialHtml = "", onClose = () => {}, onS
     reader.onload = () => {
       try {
         exec("insertImage", reader.result);
-      } catch (err) {
+      } catch {
+        // fallback manual insert
         try {
           restoreSelection();
           const img = document.createElement("img");
@@ -137,12 +164,14 @@ export default function Editor({ open, initialHtml = "", onClose = () => {}, onS
           } else if (editorRef.current) {
             editorRef.current.appendChild(img);
           }
+          syncStateFromDOM();
         } catch (err2) {
           console.error("image insert failed", err2);
         }
       } finally {
-        try { e.target.value = ""; } catch {}
-        setLocalHtml(editorRef.current?.innerHTML ?? "");
+        try {
+          e.target.value = "";
+        } catch {}
       }
     };
     reader.readAsDataURL(f);
@@ -156,10 +185,21 @@ export default function Editor({ open, initialHtml = "", onClose = () => {}, onS
 
   const handleClear = () => {
     if (editorRef.current) {
-      editorRef.current.innerHTML = "";
-      setLocalHtml("");
+      editorRef.current.innerHTML = "<p></p>";
+      lastProgrammaticHtmlRef.current = "<p></p>";
+      setLocalHtml("<p></p>");
       editorRef.current.focus();
     }
+  };
+
+  // Optional: intercept paste to avoid weird formatting (keeps things simple)
+  const handlePaste = (e) => {
+    // paste as plain text to avoid unexpected structure
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData("text");
+    document.execCommand("insertText", false, text);
+    // update stored html
+    setTimeout(syncStateFromDOM, 0);
   };
 
   if (!open) return null;
@@ -220,9 +260,16 @@ export default function Editor({ open, initialHtml = "", onClose = () => {}, onS
             ref={editorRef}
             contentEditable
             suppressContentEditableWarning
-            onInput={() => setLocalHtml(editorRef.current?.innerHTML ?? "")}
+            onInput={() => {
+              // update state on user typing
+              const html = editorRef.current?.innerHTML ?? "";
+              lastProgrammaticHtmlRef.current = html;
+              setLocalHtml(html);
+              saveSelection();
+            }}
             onMouseUp={saveSelection}
             onKeyUp={saveSelection}
+            onPaste={handlePaste}
             style={{
               flex: 1,
               minHeight: 320,
@@ -231,16 +278,29 @@ export default function Editor({ open, initialHtml = "", onClose = () => {}, onS
               borderRadius: 8,
               outline: "none",
               overflowY: "auto",
+              // critical: force left-to-right and normal unicode-bidi to avoid RTL/bi-di reversing
+              direction: "ltr",
+              unicodeBidi: "normal",
             }}
             className="prose"
-            dangerouslySetInnerHTML={{ __html: localHtml || "<p></p>" }}
-          />
+            // NOTE: we *do not* use dangerouslySetInnerHTML on every render.
+            // ensure initial DOM content is present when component mounts:
+            // if editorRef.current is null right now, the useEffect above will populate it when available.
+          >
+            {/* React won't render children into a contentEditable reliably,
+                so we set innerHTML imperatively in useEffect. For the very first mount,
+                if editorRef.current is available now, populate it: */}
+            {typeof window !== "undefined" && editorRef.current && editorRef.current.innerHTML === "" ? (
+              // The element's innerHTML will be set by useEffect, but this guard prevents React from
+              // printing content inside the element. This JSX branch is inert — the DOM is managed imperatively.
+              null
+            ) : null}
+          </div>
+
           <div style={{ width: 300, maxHeight: 420, overflow: "auto", borderLeft: "1px solid #eee", paddingLeft: 12 }}>
             <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 8 }}>Live HTML preview</div>
             <div style={{ fontSize: 12, background: "#fbfbfb", padding: 8, borderRadius: 6 }}>
-              <pre style={{ fontSize: 11, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                {localHtml || "<p></p>"}
-              </pre>
+              <pre style={{ fontSize: 11, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{localHtml || "<p></p>"}</pre>
             </div>
           </div>
         </div>
@@ -255,20 +315,4 @@ export default function Editor({ open, initialHtml = "", onClose = () => {}, onS
       </div>
     </div>
   );
-}
-
-// small helper used inside insertLink from toolbar (keeps function local here)
-function insertLink() {
-  const url = window.prompt("Enter URL (https://...):", "https://");
-  if (!url) return;
-  // This function will be called after saveSelection() in toolbar; so call exec via window
-  try {
-    document.execCommand("createLink", false, url);
-  } catch (err) {
-    try {
-      document.execCommand("createLink", false, url);
-    } catch (e) {
-      console.error("createLink failed", e);
-    }
-  }
 }

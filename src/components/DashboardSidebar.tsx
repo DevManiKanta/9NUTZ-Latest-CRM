@@ -279,6 +279,7 @@ const navigationItems = [
   { id: "inventory-management", label: "Inventory Management", path: "/sku/Inventory-Management", icon: ClipboardList },
   { id: "vendor-management", label: "Vendor Management", path: "/sku/vendor-Management", icon: Building2 },
     { id: "Reports", label: "Reports", path: "/Reports", icon: Image },
+     { id: "Reports", label: "CustomerList", path: "/CustomerList", icon: Image },
 ];
 
 const settingsChildren = [
