@@ -1,4 +1,5 @@
 
+
 // import React, { useEffect, useState, useRef } from "react";
 // import { useDispatch } from "react-redux";
 // import {
@@ -17,10 +18,15 @@
 // } from "lucide-react";
 // import { toast } from "react-hot-toast";
 // import { setSiteSettings } from "../redux/slices/sitesettings";
-// import GstManagement from "../pages/SkuList"
-// import Bannerspage from "../pages/BannersPage"
+// import GstManagement from "../pages/SkuList";
+// import Bannerspage from "../pages/BannersPage";
+// import SalesBanner from "../pages/SalesBanner";
+// import Socialmedia from "../pages/SocialMedia";
+// import ShopSettings from "../pages/ShopSettings"
+// import Discounts from "../pages/Discounts"
+// import api from "../api/axios"
 
-// const LOCAL_API_BASE = "https://9nutsapi.nearbydoctors.in/public/api/"; // adjust if needed
+// const LOCAL_API_BASE = api.defaults.baseURL;
 // const TOKEN_KEY = "token"; // adjust if your app uses a different key
 
 // export default function ProfilePage({ initialUser = null, initialOrders = [] }) {
@@ -185,7 +191,7 @@
 //     setIsFetching(true);
 //     const loadingId = toast.loading("Loading settings...");
 //     try {
-//       const res = await fetch(`${LOCAL_API_BASE}settings`, {
+//       const res = await fetch(`${LOCAL_API_BASE}/settings`, {
 //         method: "GET",
 //         headers: {
 //           Accept: "application/json",
@@ -213,7 +219,6 @@
 //           address: p.address ?? "",
 //           createdAt: p.created_at ?? p.createdAt ?? new Date().toISOString(),
 //         };
-//         console.log("normalizedUser",normalizedUser)
 //         setUser((prev) => ({ ...prev, ...normalizedUser }));
 //         // update localStorage user safely
 //         try {
@@ -282,6 +287,7 @@
 //         try {
 //           dispatch(setSiteSettings(normalizedSettings));
 //         } catch (e) {
+//           // ignore
 //         }
 //       }
 
@@ -402,7 +408,7 @@
 //       if (logoFile) fd.append("logo", logoFile);
 //       if (faviconFile) fd.append("favicon", faviconFile);
 
-//       const res = await fetch(`${LOCAL_API_BASE}admin/settings/update`, {
+//       const res = await fetch(`${LOCAL_API_BASE}/admin/settings/update`, {
 //         method: "POST",
 //         headers: {
 //           Authorization: `Bearer ${token}`,
@@ -412,9 +418,9 @@
 //       });
 
 //       const data = await res.json().catch(() => null);
-//        if(data){
-//            window.location.reload()
-//        }
+//       if (data) {
+//         window.location.reload();
+//       }
 //       if (!res.ok) {
 //         const serverMsg = data?.message || data?.error || `Update failed (${res.status})`;
 //         toast.error(serverMsg);
@@ -427,7 +433,6 @@
 //         throw new Error(serverMsg);
 //       }
 
-//       // normalize updated settings returned by server (with safe fallbacks)
 //       const updatedSettings = {
 //         site_name: data?.site_name ?? data?.settings?.site_name ?? data?.data?.site_name ?? form.site_name,
 //         email: data?.email ?? data?.settings?.email ?? form.email,
@@ -462,7 +467,6 @@
 //           address: p.address ?? updatedUser.address,
 //           createdAt: p.created_at ?? p.createdAt ?? updatedUser.createdAt,
 //         };
-  
 //       } else if (data?.user && typeof data.user === "object") {
 //         const p = data.user;
 //         updatedUser = {
@@ -532,50 +536,76 @@
 //       setIsUpdating(false);
 //     }
 //   };
+
 //   const displayName = user?.name || user?.fullName || user?.username || "User";
+//   const buildMapsEmbedUrl = (address) => {
+//     const addr = String(address ?? "").trim();
+//     if (!addr) return null;
+//     const q = encodeURIComponent(addr);
+//     return `https://www.google.com/maps?q=${q}&output=embed`;
+//   };
+
+//   const mapsUrl = buildMapsEmbedUrl(settings?.address);
+
 //   return (
-//     <div className="space-y-8">
+//     <div className="space-y-8 p-5">
 //       {/* Top: Personal Details + Quick Stats */}
 //       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-//         {/* Personal Info */}
-//         <div className="lg:col-span-2 bg-gray-50 border border-gray-200 rounded-xl p-6">
-//           <div className="flex items-center justify-between mb-4">
-//             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-//               <SettingsIcon className="h-5 w-5" /> Site Settings
-//             </h3>
-//             {settings?.logo_url ? (
-//               <img src={settings.logo_url} alt="logo" className="h-20 w-20 object-contain" />
-//             ) : (
-//               <div className="text-sm text-gray-400 flex items-center gap-2">
-//                 <ImageIcon className="h-5 w-5" /> No logo
-//               </div>
-//             )}
-//           </div>
-//           <div className="grid sm:grid-cols-2 gap-4">
-//             {/* Name */}
-//             <div className="p-4 bg-white rounded-lg border">
-//               <div className="text-xs uppercase text-gray-500">Name</div>
-//               <div className="mt-1 font-medium text-gray-900">{settings?.site_name || "—"}</div>
-//             </div>
-//             {/* Email */}
-//             <div className="p-4 bg-white rounded-lg border">
-//               <div className="text-xs uppercase text-gray-500">Email</div>
-//               <div className="mt-1 font-medium text-gray-900 flex items-center gap-2">
-//                 <Mail className="h-4 w-4 text-gray-400" />
-//                 {settings?.email || "—"}
-//               </div>
-//             </div>
+//   {/* Personal Info */}
+//   <div className="lg:col-span-2 bg-gray-50 border border-gray-200 rounded-xl p-6">
+//     <div className="mb-4">
+//   <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-2">
+//     <SettingsIcon className="h-5 w-5" /> Site Settings
+//   </h3>
 
-//             {/* Phone */}
-//             <div className="p-4 bg-white rounded-lg border">
-//               <div className="text-xs uppercase text-gray-500">Phone</div>
-//               <div className="mt-1 font-medium text-gray-900 flex items-center gap-2">
-//                 <Phone className="h-4 w-4 text-gray-400" />
-//               {settings?.phone || "—"}
-//               </div>
-//             </div>
+//   {settings?.logo_url ? (
+//     <div className="flex justify-start">
+//       <img
+//         src={settings.logo_url}
+//         alt="logo"
+//         className="h-20 w-20 object-contain rounded"
+//       />
+//     </div>
+//   ) : (
+//     <div className="text-sm text-gray-400 flex items-center gap-2">
+//       <ImageIcon className="h-5 w-5" /> No logo
+//     </div>
+//   )}
+// </div>
+
+
+//     {/* NEW: two-column inner grid — left = stacked info cards, right = Edit card */}
+//     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+//       {/* LEFT: stacked info cards (full width in this column) */}
+//       <div className="space-y-4">
+//         {/* Name */}
+//         <div className="p-4 bg-white rounded-lg border">
+//           <div className="text-xs uppercase text-gray-500">Name</div>
+//           <div className="mt-1 font-medium text-gray-900">{settings?.site_name || "—"}</div>
+//         </div>
+
+//         {/* Email */}
+//         <div className="p-4 bg-white rounded-lg border">
+//           <div className="text-xs uppercase text-gray-500">Email</div>
+//           <div className="mt-1 font-medium text-gray-900 flex items-center gap-2">
+//             <Mail className="h-4 w-4 text-gray-400" />
+//             <span className="truncate">{settings?.email || "—"}</span>
 //           </div>
-//           <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mt-1">
+//         </div>
+
+//         {/* Phone */}
+//         <div className="p-4 bg-white rounded-lg border">
+//           <div className="text-xs uppercase text-gray-500">Phone</div>
+//           <div className="mt-1 font-medium text-gray-900 flex items-center gap-2">
+//             <Phone className="h-4 w-4 text-gray-400" />
+//             <span className="truncate">{settings?.phone || "—"}</span>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* RIGHT: Edit Setting Details (sits to the right of the stacked cards) */}
+//       <div>
+//         <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 h-full">
 //           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
 //             <Lock className="h-5 w-5" /> Edit Setting Details
 //           </h3>
@@ -587,6 +617,7 @@
 //             <div className="text-sm text-gray-600">
 //               Site Email: <span className="font-medium text-gray-800">{settings?.email || "—"}</span>
 //             </div>
+
 //             <div className="flex gap-2 mt-3">
 //               <button
 //                 ref={triggerRef}
@@ -610,10 +641,47 @@
 //               </div>
 //             </div>
 //           </div>
-//         </div> 
 //         </div>
-//       <GstManagement />
 //       </div>
+//     </div>
+//     {/* end inner grid */}
+//   </div>
+//   {/* GST column + map directly below it (same right column) */}
+//   <div className="lg:col-span-1 space-y-4">
+//     {/* GST management component (unchanged) */}
+//     <div>
+//       <GstManagement />
+//     </div>
+//     {/* Map card — appears directly below GST management */}
+//     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+//       <div className="px-4 py-3 border-b">
+//         <h4 className="text-sm font-semibold">Location (Map)</h4>
+//       </div>
+
+//       <div className="p-3">
+//         {mapsUrl ? (
+//           <div className="w-full h-64 rounded-md overflow-hidden border">
+//             <iframe
+//               title="Site location map"
+//               src={mapsUrl}
+//               className="w-full h-full border-0"
+//               loading="lazy"
+//               referrerPolicy="no-referrer-when-downgrade"
+//             />
+//           </div>
+//         ) : (
+//           <div className="text-sm text-gray-600">
+//             Address not available. Please update the site address in Edit Details to display the map.
+//           </div>
+//         )}
+
+//         <div className="text-xs text-gray-500 mt-2">
+//           The map is generated from the address returned by the settings API (Google Maps embed).
+//         </div>
+//       </div>
+//     </div>
+//   </div>
+// </div>
 //       {showDetailsModal && (
 //         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" aria-hidden={!showDetailsModal}>
 //           <div className="fixed inset-0 bg-black/40 z-[9998]" aria-hidden="true" onClick={() => setShowDetailsModal(false)} />
@@ -632,6 +700,7 @@
 //                 <X className="h-5 w-5 text-gray-600" />
 //               </button>
 //             </div>
+
 //             <form onSubmit={handleSubmitDetails} className="space-y-4">
 //               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 //                 {/* User fields */}
@@ -654,25 +723,6 @@
 //                   <div className="text-sm text-gray-600">Address</div>
 //                   <input name="address" value={form.address} onChange={handleChange} className="w-full p-2 border rounded" placeholder="Address line" required />
 //                 </label>
-
-//                 {/* Password */}
-//                 {/* <label className="space-y-1 md:col-span-2 relative">
-//                   <div className="text-sm text-gray-600">Password (leave blank to keep current)</div>
-//                   <div className="relative">
-//                     <input
-//                       name="password"
-//                       type={showPassword ? "text" : "password"}
-//                       value={form.password}
-//                       onChange={handleChange}
-//                       className="w-full p-2 border rounded pr-10"
-//                       placeholder="New password (optional)"
-//                     />
-//                     <button type="button" onClick={() => setShowPassword((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded">
-//                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-//                     </button>
-//                   </div>
-//                   <div className="text-xs text-gray-500">If you enter a password it must be at least 8 chars and include a digit.</div>
-//                 </label> */}
 
 //                 {/* Settings fields */}
 //                 <label className="space-y-1">
@@ -724,6 +774,8 @@
 //   );
 // }
 
+
+
 import React, { useEffect, useState, useRef } from "react";
 import { useDispatch } from "react-redux";
 import {
@@ -744,6 +796,11 @@ import { toast } from "react-hot-toast";
 import { setSiteSettings } from "../redux/slices/sitesettings";
 import GstManagement from "../pages/SkuList";
 import Bannerspage from "../pages/BannersPage";
+import SalesBanner from "../pages/SalesBanner";
+import Socialmedia from "../pages/SocialMedia";
+import ShopSettings from "../pages/ShopSettings"
+import Discounts from "../pages/Discounts"
+import { Button } from "@/components/ui/button";
 import api from "../api/axios"
 
 const LOCAL_API_BASE = api.defaults.baseURL;
@@ -834,6 +891,9 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
   const [isFetching, setIsFetching] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
+
+  // NEW: tab state (added as requested)
+  const [activeTab, setActiveTab] = useState("settings"); // default tab
 
   // refs
   const modalRef = useRef(null);
@@ -1033,8 +1093,6 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
     }
     return undefined;
   }, [showDetailsModal]);
-
-  // fill form when modal opens (use latest user & settings)
   useEffect(() => {
     if (showDetailsModal) {
       setForm({
@@ -1068,16 +1126,12 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
     } else {
       triggerRef.current?.focus?.();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showDetailsModal, user, settings]);
-
-  // input handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((p) => ({ ...p, [name]: value }));
     if (formError) setFormError("");
   };
-
   const handleLogoChange = (e) => {
     const f = e.target.files?.[0] ?? null;
     setLogoFile(f);
@@ -1153,7 +1207,6 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
         throw new Error(serverMsg);
       }
 
-      // normalize updated settings returned by server (with safe fallbacks)
       const updatedSettings = {
         site_name: data?.site_name ?? data?.settings?.site_name ?? data?.data?.site_name ?? form.site_name,
         email: data?.email ?? data?.settings?.email ?? form.email,
@@ -1209,7 +1262,6 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
           address: form.address.trim(),
         };
       }
-
       // update local state and localStorage
       setSettings((prev) => ({ ...prev, ...updatedSettings }));
       setUser(updatedUser);
@@ -1259,9 +1311,6 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
   };
 
   const displayName = user?.name || user?.fullName || user?.username || "User";
-
-  // ---------------- Map helpers ----------------
-  // Build a Google Maps embed URL using the address (iframe-friendly)
   const buildMapsEmbedUrl = (address) => {
     const addr = String(address ?? "").trim();
     if (!addr) return null;
@@ -1273,8 +1322,37 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
 
   return (
     <div className="space-y-8 p-5">
-      {/* Top: Personal Details + Quick Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <div className="flex flex-wrap gap-2 mb-4">
+          {[
+            { key: "settings", label: "Site Settings" },
+            // { key: "gst", label: "GST Management" },
+            // { key: "banners", label: "Banners" },
+            { key: "sales", label: "Sales Banner" },
+            { key: "social", label: "Social Media" },
+            { key: "shop", label: "Shop Settings" },
+            { key: "discounts", label: "Discounts" },
+          ].map((t) => (
+            <Button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                activeTab === t.key
+                  ? ""
+                  : "bg-gray-100 text-gray-700 border border-gray-200"
+              }`}
+              // type="button"
+            >
+              {t.label}
+            </Button>
+          ))}
+        </div>
+
+        {/* Tab content */}
+        <div className="mt-2">
+          {activeTab === "settings" && (
+            <div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
   {/* Personal Info */}
   <div className="lg:col-span-2 bg-gray-50 border border-gray-200 rounded-xl p-6">
     <div className="mb-4">
@@ -1296,19 +1374,12 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
     </div>
   )}
 </div>
-
-
-    {/* NEW: two-column inner grid — left = stacked info cards, right = Edit card */}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-      {/* LEFT: stacked info cards (full width in this column) */}
       <div className="space-y-4">
-        {/* Name */}
         <div className="p-4 bg-white rounded-lg border">
           <div className="text-xs uppercase text-gray-500">Name</div>
           <div className="mt-1 font-medium text-gray-900">{settings?.site_name || "—"}</div>
         </div>
-
-        {/* Email */}
         <div className="p-4 bg-white rounded-lg border">
           <div className="text-xs uppercase text-gray-500">Email</div>
           <div className="mt-1 font-medium text-gray-900 flex items-center gap-2">
@@ -1316,8 +1387,6 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
             <span className="truncate">{settings?.email || "—"}</span>
           </div>
         </div>
-
-        {/* Phone */}
         <div className="p-4 bg-white rounded-lg border">
           <div className="text-xs uppercase text-gray-500">Phone</div>
           <div className="mt-1 font-medium text-gray-900 flex items-center gap-2">
@@ -1326,8 +1395,6 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
           </div>
         </div>
       </div>
-
-      {/* RIGHT: Edit Setting Details (sits to the right of the stacked cards) */}
       <div>
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 h-full">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -1341,7 +1408,6 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
             <div className="text-sm text-gray-600">
               Site Email: <span className="font-medium text-gray-800">{settings?.email || "—"}</span>
             </div>
-
             <div className="flex gap-2 mt-3">
               <button
                 ref={triggerRef}
@@ -1354,7 +1420,6 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
               </button>
               {isFetching && <div className="text-sm text-gray-500">Refreshing…</div>}
             </div>
-
             <div className="mt-4 text-sm text-gray-600 space-y-1">
               <div>Phone: {settings?.phone || "—"}</div>
               <div>Alt Phone: {settings?.altphone || "—"}</div>
@@ -1369,22 +1434,15 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
         </div>
       </div>
     </div>
-    {/* end inner grid */}
   </div>
-
-  {/* GST column + map directly below it (same right column) */}
   <div className="lg:col-span-1 space-y-4">
-    {/* GST management component (unchanged) */}
     <div>
       <GstManagement />
     </div>
-
-    {/* Map card — appears directly below GST management */}
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
       <div className="px-4 py-3 border-b">
         <h4 className="text-sm font-semibold">Location (Map)</h4>
       </div>
-
       <div className="p-3">
         {mapsUrl ? (
           <div className="w-full h-64 rounded-md overflow-hidden border">
@@ -1401,16 +1459,44 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
             Address not available. Please update the site address in Edit Details to display the map.
           </div>
         )}
-
-        <div className="text-xs text-gray-500 mt-2">
-          The map is generated from the address returned by the settings API (Google Maps embed).
-        </div>
       </div>
     </div>
   </div>
 </div>
-
-
+            </div>
+          )}
+          {activeTab === "gst" && (
+            <div className="mt-3">
+              <GstManagement />
+            </div>
+          )}
+          {activeTab === "banners" && (
+            <div className="mt-3">
+              <Bannerspage />
+            </div>
+          )}
+          {activeTab === "sales" && (
+            <div className="mt-3">
+              <SalesBanner />
+            </div>
+          )}
+          {activeTab === "social" && (
+            <div className="mt-3">
+              <Socialmedia />
+            </div>
+          )}
+          {activeTab === "shop" && (
+            <div className="mt-3">
+              <ShopSettings />
+            </div>
+          )}
+          {activeTab === "discounts" && (
+            <div className="mt-3">
+              <Discounts />
+            </div>
+          )}
+        </div>
+      </div>
       {showDetailsModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" aria-hidden={!showDetailsModal}>
           <div className="fixed inset-0 bg-black/40 z-[9998]" aria-hidden="true" onClick={() => setShowDetailsModal(false)} />

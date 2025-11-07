@@ -408,7 +408,6 @@ export default function CustomerList() {
 
   // drawer state
   const [openCustomer, setOpenCustomer] = useState(null);
-
   return (
     <div className="p-4">
       <div className="flex items-center justify-between gap-3 mb-4">

@@ -285,9 +285,10 @@ const navigationItems = [
 const settingsChildren = [
   // { id: "gst", label: "GST", path: "/sku/list" },
   { id: "site-settings", label: "Site Settings", path: "/Site-Settings" },
-  { id: "Sales-Banner", label: "Sales-Banner", path: "/Sales-Banner", icon: Building2 },
-  { id: "Social-Media", label: "Social-Media", path: "/Social-Media", icon:Instagram  },
-  { id: "Shop-Settings", label: "Shop-Settings", path: "/Shop-Settings", icon:Building2  },
+  // { id: "Sales-Banner", label: "Sales-Banner", path: "/Sales-Banner", icon: Building2 },
+  // { id: "Social-Media", label: "Social-Media", path: "/Social-Media", icon:Instagram  },
+  // { id: "Shop-Settings", label: "Shop-Settings", path: "/Shop-Settings", icon:Building2  },
+  //  { id: "Discount", label: "Discount", path: "/Discount", icon:Building2  },
 ];
 
 export const DashboardSidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {

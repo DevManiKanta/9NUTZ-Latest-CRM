@@ -44,12 +44,12 @@ import SalesBanner from "./pages/SalesBanner";
 import SocialMedia from "./pages/SocialMedia";
 import Reports from "./pages/Reports";
 import GstCacheReport from "./pages/GstCacheReport";
-import NewVendor from "./pages/NewVendor";
+import NewVendor from "./pages/Categorycarosel";
 import VendorList from "./pages/CustomerList";
 import Profilepage from "./pages/ProfilePage";
 import ShopSettings from "./pages/ShopSettings";
 import CategoryManagement from "./pages/CategoryManagement";
-import MasterManagement from "./pages/MasterManagement";
+import Disconts from "./pages/Discounts";
 import RouteManagement from "./pages/RouteManagement";
 import AssetsManagement from "./pages/AssetsManagement";
 import ConsolidatedVehiclePay from "./pages/ConsolidatedVehiclePay";
@@ -59,6 +59,7 @@ import TestProducts from "./pages/TestProducts";
 import CommingSoon from "./pages/CommingSoon";
 import Bannerspage from "./pages/Bannerspage"
 import PublicRoute from "@/components/auth/ProtectedRoute";
+import { CategoriesProvider } from "@/components/contexts/categoriesContext";
 import { Provider } from "react-redux";
 import { store } from "@/redux/store";
 const queryClient = new QueryClient();
@@ -71,6 +72,7 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <GstProvider>
+          <CategoriesProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginForm />} />
@@ -486,11 +488,11 @@ const App = () => (
               }
             />
              <Route
-              path="Management/MasterManagement"
+              path="Discount"
               element={
                 <ProtectedRoute>
                   <DashboardLayout>
-                    <MasterManagement />
+                    <Disconts />
                   </DashboardLayout>
                 </ProtectedRoute>
               }
@@ -548,6 +550,7 @@ const App = () => (
             />
           </Routes>
         </BrowserRouter>
+        </CategoriesProvider>
         </GstProvider>
       </AuthProvider>
     </TooltipProvider>

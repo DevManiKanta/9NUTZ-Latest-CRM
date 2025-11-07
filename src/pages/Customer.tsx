@@ -1046,11 +1046,901 @@
 // }
 
 
+// import React, { useEffect, useMemo, useRef, useState } from "react";
+// import { Search, ShoppingCart, X, Plus, Minus, Trash2, Edit3 } from "lucide-react";
+// import toast, { Toaster } from "react-hot-toast";
+// import api from "../api/axios";
+// import { useGst } from "@/components/contexts/gstContext";
+// import Categorycarosel from "./Categorycarosel";
+// type Product = {
+//   id?: string | number;
+//   name: string;
+//   price: number;
+//   unit?: string;
+//   image?: string;
+//   image_url?: string;
+//   sku?: string;
+//   stock?: number;
+//   category?: any;
+// };
+
+// type CartLine = {
+//   product: Product;
+//   qty: number;
+//   lineTotal: number;
+// };
+
+// type Order = {
+//   orderId: string;
+//   customerName: string;
+//   phone: string;
+//   email?: string;
+//   dateTimeISO: string;
+//   amount: number;
+//   items: any[];
+//   payment: any;
+//   offline?: boolean;
+// };
+
+// /* ---------- sample data (kept from your code) ---------- */
+// const SAMPLE_PRODUCTS: Product[] = [
+//   { id: "p-1", name: "Millet Idly Ravvas (500g)", price: 120, unit: "500g", image: "https://source.unsplash.com/featured/600x600/?millet,idli,grain&sig=101", sku: "MIR-500", stock: 50, category: "Millets" },
+//   { id: "p-2", name: "Millet Upma Ravva (500g)", price: 95, unit: "500g", image: "https://source.unsplash.com/featured/600x600/?millet,upma,coarse-grain&sig=102", sku: "MUR-500", stock: 40, category: "Millets" },
+//   { id: "p-3", name: "Organic Grains Mix (1kg)", price: 240, unit: "1kg", image: "https://source.unsplash.com/featured/600x600/?organic,grains,mix&sig=103", sku: "GRA-1KG", stock: 30, category: "Grains" },
+//   { id: "p-4", name: "Special Dry Fruits Pack", price: 480, unit: "500g", image: "https://source.unsplash.com/featured/600x600/?dry-fruits,nuts,mix&sig=104", sku: "SDF-500", stock: 20, category: "Dry Fruits" },
+//   { id: "p-5", name: "Premium Flour (2kg)", price: 180, unit: "2kg", image: "https://source.unsplash.com/featured/600x600/?flour,wheat,bread-ingredients&sig=105", sku: "FLO-2KG", stock: 60, category: "Flour" },
+//   { id: "p-6", name: "Healthy Snack Mix (250g)", price: 150, unit: "250g", image: "https://source.unsplash.com/featured/600x600/?healthy-snack,nuts,seeds&sig=106", sku: "SNK-250", stock: 80, category: "Snacks" },
+//   { id: "p-7", name: "Ragi Flour (1kg)", price: 59, unit: "1kg", image: "https://source.unsplash.com/featured/600x600/?ragi,flour&sig=107", sku: "RAG-1KG", stock: 0, category: "Flour" },
+//   { id: "p-8", name: "Little Idly / Upma Rawa", price: 79, unit: "100g", image: "https://source.unsplash.com/featured/600x600/?upma,rawa&sig=108", sku: "LIT-100", stock: 100, category: "Ready" },
+//   // Add more sample items if you want to see full 12 on cards layout in dev without API
+// ];
+
+// const Spinner = ({ size = 16 }: { size?: number }) => (
+//   <svg className="animate-spin" width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+//     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.2" strokeWidth="4" />
+//     <path d="M22 12a10 10 0 00-10-10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+//   </svg>
+// );
+
+// export default function POS(): JSX.Element {
+//   /* ---------- state ---------- */
+//   const [products, setProducts] = useState<Product[]>(SAMPLE_PRODUCTS);
+//   const [loadingProducts, setLoadingProducts] = useState(false);
+//   const [query, setQuery] = useState("");
+//   const [cartMap, setCartMap] = useState<Record<string, number>>({});
+//   const [discount, setDiscount] = useState<{ type: "fixed" | "percent"; value: number }>({ type: "fixed", value: 0 });
+//   const [isCheckingOut, setIsCheckingOut] = useState(false);
+//   const [gstPercent, setGstPercent] = useState<number>(18);
+//   const [adminEditProduct, setAdminEditProduct] = useState<Product | null>(null);
+//   const [adminModalOpen, setAdminModalOpen] = useState(false);
+//   const [adminName, setAdminName] = useState("");
+//   const [adminPrice, setAdminPrice] = useState<string>("");
+//   const [adminImageFile, setAdminImageFile] = useState<File | null>(null);
+//   const [adminPreview, setAdminPreview] = useState<string>("");
+//   const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; name?: string } | null>(null);
+//   const [deleteLoading, setDeleteLoading] = useState(false);
+//   const imageInputRef = useRef<HTMLInputElement | null>(null);
+
+//   const [customerName, setCustomerName] = useState<string>("");
+//   const [customerPhone, setCustomerPhone] = useState<string>("");
+//   const [paymentMethod, setPaymentMethod] = useState<"card" | "upi" | "cash" | "">("");
+//   // note: pageSize is dynamic by view mode:
+//   const [page, setPage] = useState<number>(1);
+//   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
+
+//   // cartVisible is kept true always (fixed, unmovable cart)
+//   const cartVisible = true;
+
+//   const { items: gstOptions, loading: gstLoading } = useGst();
+
+//   /* ---------- load server products (kept from your code) ---------- */
+//   useEffect(() => {
+//     let mounted = true;
+//     const load = async () => {
+//       setLoadingProducts(true);
+//       try {
+//         const res = await api.get("/admin/products/show");
+//         const body = res.data;
+//         let rows: any[] = [];
+//         if (Array.isArray(body)) rows = body;
+//         else if (Array.isArray(body.data)) rows = body.data;
+//         else if (Array.isArray(body.products)) rows = body.products;
+//         else rows = [];
+
+//         if (mounted && rows.length) {
+//           const normalized = rows.map((r: any, i: number) => ({
+//             id: r.id ?? r._id ?? r.product_id ?? `srv-${i}`,
+//             name: r.name ?? r.title ?? `Product ${i + 1}`,
+//             price: Number(r.price ?? r.amount ?? 0),
+//             unit: r.grams ?? r.unit ?? r.size ?? undefined,
+//             image: r.image ?? r.image_url ?? undefined,
+//             image_url: r.image_url ?? undefined,
+//             sku: r.sku ?? r.code ?? undefined,
+//             stock: r.stock !== undefined ? Number(r.stock) : undefined,
+//             category: r.category && typeof r.category === "object" ? r.category.name ?? r.category : r.category,
+//           }));
+//           setProducts(normalized);
+//         }
+//       } catch (err) {
+//         console.error("Failed to load products", err);
+//       } finally {
+//         if (mounted) setLoadingProducts(false);
+//       }
+//     };
+//     void load();
+//     return () => { mounted = false; };
+//   }, []);
+
+//   useEffect(() => {
+//     setPage(1);
+//   }, [query, products, viewMode]);
+
+//   /* ---------- cart calculations ---------- */
+//   const cartLines: CartLine[] = useMemo(() => {
+//     const arr: CartLine[] = [];
+//     for (const pid of Object.keys(cartMap)) {
+//       const qty = cartMap[pid];
+//       const prod = products.find((p) => String(p.id) === pid);
+//       if (!prod) continue;
+//       const lineTotal = Math.round((prod.price * qty + Number.EPSILON) * 100) / 100;
+//       arr.push({ product: prod, qty, lineTotal });
+//     }
+//     return arr;
+//   }, [cartMap, products]);
+
+//   const itemsCount = cartLines.reduce((s, l) => s + l.qty, 0);
+//   const subTotal = cartLines.reduce((s, l) => s + l.lineTotal, 0);
+//   const gstAmount = Math.round((subTotal * (gstPercent / 100) + Number.EPSILON) * 100) / 100;
+//   const discountAmount = discount.type === "fixed" ? discount.value : Math.round((subTotal * (discount.value / 100) + Number.EPSILON) * 100) / 100;
+//   const total = Math.max(0, Math.round((subTotal + gstAmount - discountAmount + Number.EPSILON) * 100) / 100);
+
+//   /* ---------- filtering & pagination; pageSize depends on viewMode ---------- */
+//   const pageSize = viewMode === "table" ? 7 : 12;
+//   const visibleProducts = products.filter((p) => {
+//     if (!query) return true;
+//     const q = query.toLowerCase();
+//     return p.name.toLowerCase().includes(q) || String(p.sku || "").toLowerCase().includes(q) || String(p.category || "").toLowerCase().includes(q);
+//   });
+
+//   const totalPages = Math.max(1, Math.ceil(visibleProducts.length / pageSize));
+//   const paginatedProducts = visibleProducts.slice((page - 1) * pageSize, page * pageSize);
+
+//   /* ---------- helpers (add, inc, dec, remove) ---------- */
+//   function addToCart(product: Product, qty = 1) {
+//     setCartMap((m) => {
+//       const key = String(product.id);
+//       const nextQty = (m[key] ?? 0) + qty;
+//       return { ...m, [key]: nextQty };
+//     });
+//     toast.success(`${product.name} added to cart`);
+//   }
+
+//   function setQty(productId: string | number, qty: number) {
+//     const key = String(productId);
+//     setCartMap((m) => {
+//       if (qty <= 0) {
+//         const copy = { ...m };
+//         delete copy[key];
+//         return copy;
+//       }
+//       return { ...m, [key]: qty };
+//     });
+//   }
+//   function inc(productId: string | number) {
+//     const key = String(productId);
+//     setCartMap((m) => ({ ...m, [key]: (m[key] ?? 0) + 1 }));
+//   }
+//   function dec(productId: string | number) {
+//     const key = String(productId);
+//     setCartMap((m) => {
+//       const next = (m[key] ?? 0) - 1;
+//       if (next <= 0) {
+//         const copy = { ...m };
+//         delete copy[key];
+//         return copy;
+//       }
+//       return { ...m, [key]: next };
+//     });
+//   }
+
+//   function removeLine(productId: string | number) {
+//     const key = String(productId);
+//     setCartMap((m) => {
+//       const copy = { ...m };
+//       delete copy[key];
+//       return copy;
+//     });
+//   }
+
+//   /* ---------- validation & checkout ---------- */
+//   const validPhone = (p: string) => {
+//     const cleaned = p.replace(/\D/g, "");
+//     return cleaned.length >= 10;
+//   };
+//   const validName = (n: string) => n.trim().length > 0;
+
+//   async function handleCheckout() {
+//     if (cartLines.length === 0) { toast.error("Cart is empty"); return; }
+//     if (!validName(customerName)) { toast.error("Enter customer name"); return; }
+//     if (!validPhone(customerPhone)) { toast.error("Enter valid phone number (min 10 digits)"); return; }
+//     if (!paymentMethod) { toast.error("Select payment method"); return; }
+
+//     setIsCheckingOut(true);
+
+//     const payload = {
+//       name: customerName.trim(),
+//       phone: customerPhone.replace(/\D/g, ""),
+//       payment: paymentMethod,
+//       items: cartLines.map(l => ({
+//         product_id: typeof l.product.id === "string" && /^\d+$/.test(String(l.product.id)) ? Number(l.product.id) : l.product.id,
+//         name: l.product.name,
+//         qty: l.qty,
+//         price: l.product.price
+//       })),
+//       subtotal: subTotal,
+//       gst_percent: gstPercent,
+//       gst_amount: gstAmount,
+//       discount_type: discount.type,
+//       discount_value: discount.value,
+//       total,
+//     };
+//     try {
+//       const res = await api.post("admin/pos-orders/create", payload, { headers: { "Content-Type": "application/json" } });
+//       const body = res.data;
+//       toast.success("Purchase successful");
+//       setCartMap({});
+//       setCustomerName("");
+//       setCustomerPhone("");
+//       setPaymentMethod("");
+//       if (body?.order_id) toast.success(`Order ${body.order_id} created`);
+//     } catch (err: any) {
+//       console.error("Checkout error", err);
+//       toast.error("Network/server error while creating order");
+//     } finally {
+//       setIsCheckingOut(false);
+//     }
+//   }
+
+//   /* ---------- product create/update/delete (unchanged) ---------- */
+//   async function apiCreateProduct(name: string, price: number, file?: File | null) {
+//     const fd = new FormData();
+//     fd.append("name", name);
+//     fd.append("price", String(price));
+//     if (file) fd.append("image", file);
+//     const res = await api.post("/admin/products/add", fd, { headers: { "Content-Type": "multipart/form-data" } });
+//     const body = res.data;
+//     const raw = body?.data ?? body?.product ?? body ?? null;
+//     return {
+//       id: raw?.id ?? raw?._id ?? `srv-${Date.now()}`,
+//       name: raw?.name ?? name,
+//       price: Number(raw?.price ?? price ?? 0),
+//       image: raw?.image ?? raw?.image_url ?? raw?.imageUrl ?? undefined,
+//       image_url: raw?.image_url ?? undefined,
+//       category: raw?.category ?? raw?.category?.name ?? undefined,
+//     } as Product;
+//   }
+
+//   async function apiUpdateProduct(id: string | number, name: string, price: number, file?: File | null) {
+//     const fd = new FormData();
+//     fd.append("name", name);
+//     fd.append("price", String(price));
+//     if (file) fd.append("image", file);
+//     const res = await api.post(`/admin/products/update/${id}`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+//     const body = res.data;
+//     const raw = body?.data ?? body?.product ?? body ?? null;
+//     return {
+//       id: raw?.id ?? id,
+//       name: raw?.name ?? name,
+//       price: Number(raw?.price ?? price ?? 0),
+//       image: raw?.image ?? raw?.image_url ?? raw?.imageUrl ?? undefined,
+//       image_url: raw?.image_url ?? undefined,
+//       category: raw?.category ?? raw?.category?.name ?? undefined,
+//     } as Product;
+//   }
+
+//   async function apiDeleteProduct(id: string | number) {
+//     const res = await api.delete(`/admin/products/delete/${id}`);
+//     return res.status >= 200 && res.status < 300;
+//   }
+
+//   function openAdminCreate() {
+//     setAdminEditProduct(null);
+//     setAdminName("");
+//     setAdminPrice("");
+//     setAdminImageFile(null);
+//     setAdminPreview("");
+//     setAdminModalOpen(true);
+//   }
+
+//   function openAdminEdit(p: Product) {
+//     setAdminEditProduct(p);
+//     setAdminName(p.name ?? "");
+//     setAdminPrice(String(p.price ?? ""));
+//     setAdminImageFile(null);
+//     setAdminPreview(p.image_url ?? p.image ?? "");
+//     setAdminModalOpen(true);
+//   }
+
+//   function onAdminImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+//     const f = e.target.files?.[0] ?? null;
+//     if (!f) return;
+//     setAdminImageFile(f);
+//     const r = new FileReader();
+//     r.onload = () => setAdminPreview(String(r.result ?? ""));
+//     r.readAsDataURL(f);
+//   }
+
+//   async function submitAdminForm(e?: React.FormEvent) {
+//     e?.preventDefault();
+//     const name = adminName.trim();
+//     const price = Number(adminPrice || 0);
+//     if (!name) { toast.error("Name required"); return; }
+//     if (Number.isNaN(price)) { toast.error("Price invalid"); return; }
+//     try {
+//       if (adminEditProduct) {
+//         const optimistic = products.map((p) => (String(p.id) === String(adminEditProduct.id) ? { ...p, name, price, image: adminPreview || p.image, image_url: adminPreview || p.image_url } : p));
+//         setProducts(optimistic);
+//         setAdminModalOpen(false);
+//         const updated = await apiUpdateProduct(adminEditProduct.id!, name, price, adminImageFile);
+//         setProducts((prev) => prev.map((p) => (String(p.id) === String(updated.id) ? updated : p)));
+//         toast.success("Product updated");
+//       } else {
+//         const tmpId = `tmp-${Date.now()}`;
+//         const optimistic: Product = { id: tmpId, name, price, image: adminPreview || undefined, image_url: adminPreview || undefined };
+//         setProducts((prev) => [optimistic, ...prev]);
+//         setAdminModalOpen(false);
+//         const created = await apiCreateProduct(name, price, adminImageFile);
+//         setProducts((prev) => [created, ...prev.filter((p) => p.id !== tmpId)]);
+//         toast.success("Product created");
+//       }
+//     } catch (err: any) {
+//       console.error("Save product failed", err);
+//       toast.error(err?.message || "Save failed");
+//     } finally {
+//       setAdminImageFile(null);
+//       setAdminPreview("");
+//     }
+//   }
+
+//   function requestDelete(id: string | number, name?: string) {
+//     setDeleteTarget({ id, name });
+//   }
+
+//   async function confirmDelete() {
+//     if (!deleteTarget) return;
+//     setDeleteLoading(true);
+//     const id = deleteTarget.id;
+//     const prev = products;
+//     setProducts((p) => p.filter((x) => String(x.id) !== String(id)));
+//     try {
+//       await apiDeleteProduct(id);
+//       toast.success("Product deleted");
+//     } catch (err: any) {
+//       console.error("Delete failed", err);
+//       toast.error(err?.message || "Delete failed");
+//       setProducts(prev);
+//     } finally {
+//       setDeleteLoading(false);
+//       setDeleteTarget(null);
+//     }
+//   }
+
+//   /* ---------- small utility ---------- */
+//   const fallbackFor = (p: Product) => {
+//     const seed = encodeURIComponent(p.category || (p.name?.split(" ")[0] ?? "product"));
+//     return `https://source.unsplash.com/featured/400x400/?${seed}`;
+//   };
+//   return (
+//     <div className="min-h-screen bg-gray-50">
+//       <Toaster position="top-right" />
+
+//       {/* Top container with search + controls */}
+//       <div className="max-w-full mx-auto p-4 lg:px-8">
+//         <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm mb-6">
+//                <div className="flex items-center gap-3 mb-4">
+//   <div style={{width:"48%"}}>    
+//     <Categorycarosel />
+//   </div>
+//   <div className="flex-shrink-0">
+//     <button
+//       onClick={() => setViewMode((v) => (v === "table" ? "cards" : "table"))}
+//       className="px-4 py-2 rounded-md border bg-white hover:bg-slate-50 text-sm"
+//       title="Toggle view"
+//     >
+//       {viewMode === "table" ? "Show as Cards" : "Show as Table"}
+//     </button>
+//   </div>
+// </div>
+
+//           {/* Info line */}
+//           <div className="flex items-center justify-between mb-4">
+//             <div className="text-sm text-slate-600">{visibleProducts.length} products</div>
+//             <div className="text-sm text-slate-500">
+//               Showing {Math.min((page - 1) * pageSize + 1, visibleProducts.length)} - {Math.min(page * pageSize, visibleProducts.length)} of {visibleProducts.length}
+//             </div>
+//           </div>
+//           <div className="relative">
+//             <div className="transition-all mr-[28%]">
+//               {viewMode === "table" ? (
+//                 <div className="hidden md:block overflow-hidden rounded-lg border bg-white w-[75%]">
+//                   <table className="min-w-full divide-y divide-slate-100">
+//                     <thead className="bg-white">
+//                       <tr className="text-left text-sm text-slate-600">
+//                         <th className="px-4 py-3 w-12">S.no</th>
+//                         <th className="px-4 py-3 w-20">Image</th>
+//                         <th className="px-4 py-3">Name</th>
+//                         <th className="px-4 py-3">Category</th>
+//                         <th className="px-4 py-3">Grams</th>
+//                         <th className="px-4 py-3">Price</th>
+//                         <th className="px-4 py-3">Stock</th>
+//                         <th className="px-4 py-3 text-right">Actions</th>
+//                       </tr>
+//                     </thead>
+
+//                     <tbody className="bg-white divide-y divide-slate-100">
+//                       {loadingProducts
+//                         ? Array.from({ length: pageSize }).map((_, i) => (
+//                           <tr key={i} className="animate-pulse">
+//                             <td className="px-4 py-4"><div className="h-4 bg-slate-200 rounded w-6" /></td>
+//                             <td className="px-4 py-4"><div className="h-12 w-12 rounded-full bg-slate-200" /></td>
+//                             <td className="px-4 py-4"><div className="h-4 bg-slate-200 rounded w-48" /></td>
+//                             <td className="px-4 py-4"><div className="h-4 bg-slate-200 rounded w-32" /></td>
+//                             <td className="px-4 py-4"><div className="h-4 bg-slate-200 rounded w-12" /></td>
+//                             <td className="px-4 py-4"><div className="h-4 bg-slate-200 rounded w-20" /></td>
+//                             <td className="px-4 py-4"><div className="h-4 bg-slate-200 rounded w-8" /></td>
+//                             <td className="px-4 py-4 text-right"><div className="h-8 bg-slate-200 rounded w-24 inline-block" /></td>
+//                           </tr>
+//                         ))
+//                         : paginatedProducts.map((p, idx) => {
+//                           const globalIndex = (page - 1) * pageSize + idx;
+//                           const inCartQty = cartMap[String(p.id)] ?? 0;
+//                           const imageSrc = p.image_url ?? p.image ?? fallbackFor(p);
+//                           return (
+//                             <tr key={p.id}>
+//                               <td className="px-4 py-4 align-top text-sm text-slate-700">{globalIndex + 1}</td>
+//                               <td className="px-4 py-4 align-top">
+//                                 <div className="w-10 h-10 rounded-full overflow-hidden bg-white border">
+//                                   <img src={imageSrc} alt={p.name} className="object-cover w-10 h-10" onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackFor(p); }} />
+//                                 </div>
+//                               </td>
+//                               <td className="px-4 align-top">
+//                                 <div className="font-medium text-slate-800">{p.name}</div>
+//                                 <div className="text-sm text-slate-500 mt-1">{p.sku ?? p.unit}</div>
+//                               </td>
+//                               <td className="px-4 py-4 align-top text-sm text-slate-600">{p.category ?? "-"}</td>
+//                               <td className="px-4 py-4 align-top text-sm text-slate-600">{p.unit ?? "-"}</td>
+//                               <td className="px-4 py-4 align-top text-sm font-semibold">₹ {Number(p.price || 0).toFixed(2)}</td>
+//                               <td className="px-4 py-4 align-top text-sm text-slate-700">
+//                                 {p.stock === 0 ? (<span className="text-red-600 font-medium">Out of Stock</span>) : (p.stock ?? "-")}
+//                               </td>
+//                               <td className="px-4 py-4 align-top text-right">
+//                                 <div className="flex items-center justify-end gap-2 flex-wrap">
+//                                   {inCartQty === 0 ? (
+//                                     (p.stock === 0) ? (
+//                                       <div className="w-full text-center text-sm text-red-600 font-medium py-2"></div>
+//                                     ) : (
+//                                       <button onClick={() => addToCart(p, 1)} className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-emerald-600 text-white text-sm">
+//                                         <Plus className="w-4 h-4" /> Add
+//                                       </button>
+//                                     )
+//                                   ) : (
+//                                     <div className="inline-flex items-center gap-1 border rounded px-1">
+//                                       <button onClick={() => dec(p.id)} className="px-2 py-1 rounded"><Minus className="w-4 h-4" /></button>
+//                                       <div className="px-3 py-1 text-sm">{inCartQty}</div>
+//                                       <button onClick={() => inc(p.id)} className="px-2 py-1 rounded"><Plus className="w-4 h-4" /></button>
+//                                     </div>
+//                                   )}
+//                                   <button onClick={() => openAdminEdit(p)} title="Edit" className="p-2 rounded border hover:bg-slate-50"><Edit3 className="w-4 h-4" /></button>
+//                                   <button onClick={() => requestDelete(p.id!, p.name)} title="Delete" className="p-2 rounded border hover:bg-slate-50"><Trash2 className="w-4 h-4" /></button>
+//                                 </div>
+//                               </td>
+//                             </tr>
+//                           );
+//                         })}
+//                     </tbody>
+//                   </table>
+//                 </div>
+//               ) : (
+//                 <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 gap-4 w-[78%]">
+//                   {loadingProducts
+//                     ? Array.from({ length: pageSize }).map((_, i) => (
+//                       <div key={i} className="animate-pulse p-4 border rounded-xl bg-white" />
+//                     ))
+//                     : paginatedProducts.map((p) => {
+//                       const inCartQty = cartMap[String(p.id)] ?? 0;
+//                       const imageSrc = p.image_url ?? p.image ?? fallbackFor(p);
+//                       return (
+//                         <article key={p.id} className="bg-white border rounded-xl p-3 shadow-sm hover:shadow-md">
+//                           <div className="aspect-[4/3] w-full rounded-lg overflow-hidden bg-slate-50">
+//                             <img src={imageSrc} alt={p.name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackFor(p); }} />
+//                           </div>
+
+//                           <div className="mt-3">
+//                             <h3 className="text-sm font-semibold text-slate-900 leading-snug">{p.name}</h3>
+//                             {p.unit || p.sku ? <div className="text-xs text-slate-500 mt-0.5">{p.sku ?? p.unit}</div> : null}
+
+//                             <div className="mt-2 flex items-center justify-between">
+//                               <div className="text-base font-semibold">₹ {Number(p.price).toFixed(2)}</div>
+//                               <div className="text-xs text-slate-600">Stock: {p.stock ?? "-"}</div>
+//                             </div>
+
+//                             {p.stock <= 0 ? (
+//   <p style={{ color: "red" }}>Out of Stock</p>
+// ) : (
+//   <div className="mt-3 space-y-2">
+//     {inCartQty === 0 ? (
+//       <button
+//         onClick={() => addToCart(p, 1)}
+//         className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-emerald-600 text-white text-sm"
+//       >
+//         <Plus className="w-4 h-4" /> Add
+//       </button>
+//     ) : (
+//       <div className="w-full inline-flex items-center justify-between gap-2 border rounded-md px-2 py-1.5">
+//         <button onClick={() => dec(p.id)} className="p-1.5 rounded">
+//           <Minus className="w-4 h-4" />
+//         </button>
+//         <div className="text-sm font-medium">{inCartQty}</div>
+//         <button onClick={() => inc(p.id)} className="p-1.5 rounded">
+//           <Plus className="w-4 h-4" />
+//         </button>
+//       </div>
+//     )}
+//   </div>
+// )}
+
+//                           </div>
+//                         </article>
+//                       );
+//                     })}
+//                 </div>
+//               )}
+
+//               {/* MOBILE cards (always) */}
+//               <div className="md:hidden mt-4">
+//                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+//                   {loadingProducts
+//                     ? Array.from({ length: pageSize }).map((_, i) => (<div key={i} className="animate-pulse p-4 border rounded-xl bg-white" />))
+//                     : paginatedProducts.map((p) => {
+//                       const inCartQty = cartMap[String(p.id)] ?? 0;
+//                       const imageSrc = p.image_url ?? p.image ?? fallbackFor(p);
+//                       return (
+//                         <article key={p.id} className="bg-white border rounded-xl p-3 shadow-sm hover:shadow-md">
+//                           <div className="aspect-[4/3] w-full rounded-lg overflow-hidden bg-slate-50">
+//                             <img src={imageSrc} alt={p.name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackFor(p); }} />
+//                           </div>
+
+//                           <div className="mt-3">
+//                             <h3 className="text-sm font-semibold text-slate-900">{p.name}</h3>
+//                             {p.unit || p.sku ? <div className="text-xs text-slate-500 mt-0.5">{p.sku ?? p.unit}</div> : null}
+
+//                             <div className="mt-2 flex items-center justify-between">
+//                               <div className="text-base font-semibold">₹ {Number(p.price).toFixed(2)}</div>
+//                               <div className="text-xs text-slate-600">Stock: {p.stock ?? "-"}</div>
+//                             </div>
+// ``
+//                             <div className="mt-3 space-y-2">
+//                               {inCartQty === 0 ? (
+//                                 <button onClick={() => addToCart(p, 1)} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-emerald-600 text-white text-sm">
+//                                   <Plus className="w-4 h-4" /> Add
+//                                 </button>
+//                               ) : (
+//                                 <div className="w-full inline-flex items-center justify-between gap-2 border rounded-md px-2 py-1.5">
+//                                   <button onClick={() => dec(p.id)} className="p-1.5 rounded"><Minus className="w-4 h-4" /></button>
+//                                   <div className="text-sm font-medium">{inCartQty}</div>
+//                                   <button onClick={() => inc(p.id)} className="p-1.5 rounded"><Plus className="w-4 h-4" /></button>
+//                                 </div>
+//                               )}
+//                               <div className="grid grid-cols-2 gap-2">
+//                                 {/* <button onClick={() => openAdminEdit(p)} className="px-3 py-2 rounded-md border text-sm">Edit</button>
+//                                 <button onClick={() => requestDelete(p.id!, p.name)} className="px-3 py-2 rounded-md border text-sm">Delete</button> */}
+//                               </div>
+//                             </div>
+//                           </div>
+//                         </article>
+//                       );
+//                     })}
+//                 </div>
+//               </div>
+
+//               {/* PAGINATION */}
+//               {visibleProducts.length > 0 && totalPages > 1 && (
+//                 <div className="mt-6 flex items-center justify-between">
+//                   <nav className="inline-flex items-center gap-2" aria-label="Pagination">
+//                     <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1 rounded border bg-white hover:bg-slate-50 disabled:opacity-50">Previous</button>
+//                     <div className="hidden sm:flex items-center gap-1">
+//                       {Array.from({ length: totalPages }).map((_, i) => {
+//                         const pNum = i + 1;
+//                         const isActive = pNum === page;
+//                         return (
+//                           <button key={pNum} onClick={() => setPage(pNum)} className={`px-3 py-1 rounded ${isActive ? "bg-slate-800 text-white" : "bg-white border hover:bg-slate-50"}`} aria-current={isActive ? "page" : undefined}>
+//                             {pNum}
+//                           </button>
+//                         );
+//                       })}
+//                     </div>
+
+//                     <div className="sm:hidden text-sm text-slate-700 px-2">
+//                       {page} / {totalPages}
+//                     </div>
+
+//                     <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1 rounded border bg-white hover:bg-slate-50 disabled:opacity-50">Next</button>
+//                   </nav>
+//                 </div>
+//               )}
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* CART SIDEBAR - fixed and always visible, unmovable */}
+//       <aside
+//         id="cart-sidebar"
+//         className="fixed top-0 right-0 h-full z-40 bg-white shadow-2xl border-l"
+//         style={{ width: "38%", maxWidth: 820 }}
+//         role="region"
+//         aria-label="Cart"
+//       >
+//         <div className="p-4 md:p-6 h-full flex flex-col">
+//           <div className="flex items-center justify-between mb-4">
+//             <div>
+//               <h3 className="text-xl font-semibold">Cart</h3>
+//               <div className="text-sm text-slate-500">{itemsCount} items</div>
+//             </div>
+//             {/* intentionally no close button (fixed) */}
+//             <div />
+//           </div>
+
+//           <div className="flex-1 overflow-auto">
+//             {cartLines.length === 0 ? (
+//               <div className="h-full grid place-items-center text-slate-400">
+//                 <div className="text-center">
+//                   <div className="w-28 h-28 rounded-full bg-slate-100 grid place-items-center mb-4">
+//                     <ShoppingCart className="w-6 h-6" />
+//                   </div>
+//                   <div>No items in cart</div>
+//                   <div className="text-sm text-slate-400">Add items from the product list</div>
+//                 </div>
+//               </div>
+//             ) : (
+//               <div className="space-y-4">
+//                 {cartLines.map((ln) => (
+//                   <div key={String(ln.product.id)} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 border rounded-lg">
+//                     <div className="w-full sm:w-20 h-20 rounded overflow-hidden flex-shrink-0 bg-slate-50">
+//                       <img src={ln.product.image_url ?? ln.product.image ?? fallbackFor(ln.product)} alt={ln.product.name} className="object-cover w-full h-full" onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackFor(ln.product); }} />
+//                     </div>
+
+//                     <div className="flex-1 w-full">
+//                       <div className="flex items-start justify-between gap-2">
+//                         <div className="min-w-0">
+//                           <div className="font-medium text-slate-800">{ln.product.name}</div>
+//                           <div className="text-sm text-slate-500 mt-1">{ln.product.unit ?? ln.product.sku}</div>
+//                         </div>
+
+//                         <div className="text-right">
+//                           <div className="font-semibold">₹ {(ln.product.price * ln.qty).toFixed(2)}</div>
+//                           <div className="text-xs text-slate-500">₹ {ln.product.price.toFixed(2)} x {ln.qty}</div>
+//                         </div>
+//                       </div>
+
+//                       <div className="mt-3 flex flex-wrap gap-2 items-center">
+//                         <div className="inline-flex items-center gap-2 border rounded px-1">
+//                           <button onClick={() => dec(ln.product.id)} className="px-2 py-1 rounded"><Minus /></button>
+//                           <div className="px-3 py-1 text-sm">{ln.qty}</div>
+//                           <button onClick={() => inc(ln.product.id)} className="px-2 py-1 rounded"><Plus /></button>
+//                         </div>
+
+//                         <button onClick={() => removeLine(ln.product.id)} className="ml-auto px-3 py-1 rounded border text-sm inline-flex items-center gap-2">
+//                           <Trash2 className="w-4 h-4" /> Remove
+//                         </button>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 ))}
+//               </div>
+//             )}
+//           </div>
+
+//           <div className="mt-4 border-t pt-4">
+//             <div className="grid grid-cols-2 gap-2 mb-2">
+//               <div className="text-sm text-slate-600">Subtotal</div>
+//               <div className="text-right font-medium">₹ {subTotal.toFixed(2)}</div>
+
+//               <div className="text-sm text-slate-600">GST ({gstPercent}%)</div>
+//               <div className="text-right font-medium">₹ {gstAmount.toFixed(2)}</div>
+
+//               <div className="text-sm text-slate-600">Discount</div>
+//               <div className="text-right font-medium">- ₹ {discountAmount.toFixed(2)}</div>
+//             </div>
+//             <div className="flex items-center gap-4 mb-3 flex-wrap">
+//   {/* left: discount controls */}
+//   <div className="flex items-center gap-4">
+//     <select
+//       value={discount.type}
+//       onChange={(e) =>
+//         setDiscount((d) => ({ ...d, type: e.target.value as "fixed" | "percent" }))
+//       }
+//       className="p-2 border rounded bg-slate-50"
+//       aria-label="Discount type"
+//     >
+//       <option value="fixed">Fixed</option>
+//       <option value="percent">Percent</option>
+//     </select>
+
+//     <input
+//       type="number"
+//       min={0}
+//       value={discount.value}
+//       onChange={(e) => setDiscount((d) => ({ ...d, value: Number(e.target.value || 0) }))}
+//       className="p-2 border rounded w-36"
+//       placeholder={discount.type === "fixed" ? "₹ amount" : "%"}
+//       aria-label="Discount value"
+//     />
+//   </div>
+
+//   {/* right: GST column pinned to the end */}
+//   <div className="ml-auto mb-0 w-36 sm:w-40">
+//     <label className="text-sm text-slate-600 block mb-1">GST %</label>
+//     <select
+//       value={gstPercent}
+//       onChange={(e) => setGstPercent(Number(e.target.value))}
+//       disabled={gstLoading}
+//       className="p-2 border rounded bg-slate-50 w-full"
+//       aria-label="GST percent"
+//     >
+//       {gstLoading && <option>Loading...</option>}
+//       {!gstLoading &&
+//         gstOptions.length > 0 &&
+//         gstOptions.map((gst: any) => (
+//           <option key={gst.id} value={gst.percentage}>
+//             {`${gst.percentage}%`}
+//           </option>
+//         ))}
+
+//       {!gstLoading && gstOptions.length === 0 && <option value={18}>18%</option>}
+//     </select>
+//   </div>
+// </div>
+
+//             <div className="flex items-center justify-between mb-4">
+//               <div className="text-lg font-medium">Total</div>
+//               <div className="text-2xl font-extrabold">₹ {total.toFixed(2)}</div>
+//             </div>
+
+//             {/* All three dropdowns/inputs on one line */}
+// <div className="flex flex-wrap items-end gap-3 mb-3">
+//   {/* Customer name */}
+//   <div className="flex-1 min-w-[200px]">
+//     <label className="text-sm text-slate-600 block mb-1">Customer name</label>
+//     <input
+//       value={customerName}
+//       onChange={(e) => setCustomerName(e.target.value)}
+//       placeholder="Customer name"
+//       className="w-full p-2 border rounded"
+//     />
+//   </div>
+
+//   {/* WhatsApp number */}
+//   <div className="flex-1 min-w-[200px]">
+//     <label className="text-sm text-slate-600 block mb-1">WhatsApp Number</label>
+//     <input
+//       value={customerPhone}
+//       onChange={(e) => setCustomerPhone(e.target.value)}
+//       placeholder="10+ digits"
+//       className="w-full p-2 border rounded"
+//       inputMode="tel"
+//     />
+//   </div>
+
+//   {/* Payment dropdown */}
+//   <div className="flex-1 min-w-[180px]">
+//     <label className="text-sm text-slate-600 block mb-1">Payment</label>
+//     <select
+//       value={paymentMethod}
+//       onChange={(e) => {
+//         const val = e.target.value as "card" | "upi" | "cash" | "";
+//         if (val === "card" || val === "upi" || val === "cash" || val === "")
+//           setPaymentMethod(val);
+//         else setPaymentMethod("");
+//       }}
+//       className="p-2 border rounded bg-white w-full"
+//     >
+//       <option value="">Select payment</option>
+//       <option value="card">Card</option>
+//       <option value="upi">UPI</option>
+//       <option value="cash">Cash</option>
+//     </select>
+//   </div>
+// </div>
+
+//             <div className="flex gap-3">
+//               <button onClick={() => void handleCheckout()} disabled={isCheckingOut || cartLines.length === 0 || !validName(customerName) || !validPhone(customerPhone) || !paymentMethod} className="ml-auto px-6 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60">
+//                 {isCheckingOut ? "Processing…" : `Purchase ₹ ${total.toFixed(2)}`}
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       </aside>
+
+//       {/* ADMIN PANEL - fixed (no overlay, no close button) */}
+//       {adminModalOpen && (
+//         <aside
+//           className="fixed top-0 right-[38%] lg:right-[38%] h-full z-45 bg-white shadow-2xl border-l"
+//           style={{ width: "28%", maxWidth: 680 }}
+//           role="region"
+//           aria-label="Admin Panel"
+//         >
+//           <div className="p-4 md:p-6 h-full flex flex-col overflow-auto">
+//             <div className="mb-4">
+//               <h3 className="text-xl font-semibold">{adminEditProduct ? "Edit Product" : "Add Product"}</h3>
+//               <div className="text-sm text-slate-500 mt-1">{adminEditProduct ? "Editing product details" : "Add a new product"}</div>
+//             </div>
+
+//             <form onSubmit={submitAdminForm} className="space-y-4">
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Name</label>
+//                 <input value={adminName} onChange={(e) => setAdminName(e.target.value)} className="w-full p-2 border rounded" />
+//               </div>
+
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Price</label>
+//                 <input value={adminPrice} onChange={(e) => setAdminPrice(e.target.value)} className="w-full p-2 border rounded" type="number" step="0.01" />
+//               </div>
+
+//               <div>
+//                 <label className="block text-sm font-medium mb-1">Image</label>
+//                 <input ref={imageInputRef} type="file" accept="image/*" onChange={onAdminImageChange} className="w-full text-sm" />
+//                 {adminPreview && <div className="mt-2 w-full h-40 rounded overflow-hidden"><img src={adminPreview} alt="preview" className="w-full h-full object-cover" /></div>}
+//               </div>
+
+//               <div className="flex justify-between gap-2 mt-2">
+//                 <button
+//                   type="button"
+//                   onClick={() => {
+//                     setAdminEditProduct(null);
+//                     setAdminName("");
+//                     setAdminPrice("");
+//                     setAdminImageFile(null);
+//                     setAdminPreview("");
+//                   }}
+//                   className="px-4 py-2 border rounded text-sm"
+//                 >
+//                   Reset
+//                 </button>
+
+//                 <button type="submit" className="px-4 py-2 bg-slate-800 text-white rounded text-sm">{adminEditProduct ? "Save" : "Add"}</button>
+//               </div>
+//             </form>
+//           </div>
+//         </aside>
+//       )}
+
+//       {/* delete confirm (overlay kept so user can cancel) */}
+//       {deleteTarget && (
+//         <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+//           <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteTarget(null)} />
+//           <div className="relative bg-white rounded-lg shadow-lg w-full max-w-sm p-5 z-10">
+//             <h3 className="text-lg font-medium">Confirm deletion</h3>
+//             <p className="text-sm text-slate-600 mt-2">Are you sure you want to delete <strong>{deleteTarget.name ?? "this product"}</strong>? This action cannot be undone.</p>
+//             <div className="mt-4 flex justify-end gap-2">
+//               <button className="px-3 py-1 rounded border" onClick={() => setDeleteTarget(null)} disabled={deleteLoading}>Cancel</button>
+//               <button className="px-3 py-1 rounded bg-red-600 text-white" onClick={confirmDelete} disabled={deleteLoading}>{deleteLoading ? "Deleting..." : "Yes, delete"}</button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Search, ShoppingCart, X, Plus, Minus, Trash2, Edit3 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import api from "../api/axios";
 import { useGst } from "@/components/contexts/gstContext";
+import Categorycarosel from "./Categorycarosel"; // keeps your existing carousel component
 
 type Product = {
   id?: string | number;
@@ -1061,7 +1951,8 @@ type Product = {
   image_url?: string;
   sku?: string;
   stock?: number;
-  category?: any;
+  category?: any; // keep as before (string or object)
+  category_id?: string | number | null; // NEW: store category id if present from API
 };
 
 type CartLine = {
@@ -1092,7 +1983,6 @@ const SAMPLE_PRODUCTS: Product[] = [
   { id: "p-6", name: "Healthy Snack Mix (250g)", price: 150, unit: "250g", image: "https://source.unsplash.com/featured/600x600/?healthy-snack,nuts,seeds&sig=106", sku: "SNK-250", stock: 80, category: "Snacks" },
   { id: "p-7", name: "Ragi Flour (1kg)", price: 59, unit: "1kg", image: "https://source.unsplash.com/featured/600x600/?ragi,flour&sig=107", sku: "RAG-1KG", stock: 0, category: "Flour" },
   { id: "p-8", name: "Little Idly / Upma Rawa", price: 79, unit: "100g", image: "https://source.unsplash.com/featured/600x600/?upma,rawa&sig=108", sku: "LIT-100", stock: 100, category: "Ready" },
-  // Add more sample items if you want to see full 12 on cards layout in dev without API
 ];
 
 const Spinner = ({ size = 16 }: { size?: number }) => (
@@ -1124,12 +2014,12 @@ export default function POS(): JSX.Element {
   const [customerName, setCustomerName] = useState<string>("");
   const [customerPhone, setCustomerPhone] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"card" | "upi" | "cash" | "">("");
-  // note: pageSize is dynamic by view mode:
   const [page, setPage] = useState<number>(1);
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
 
-  // cartVisible is kept true always (fixed, unmovable cart)
-  const cartVisible = true;
+  // New: selected category state (id and name)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | number | null>(null);
+  const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null);
 
   const { items: gstOptions, loading: gstLoading } = useGst();
 
@@ -1148,17 +2038,25 @@ export default function POS(): JSX.Element {
         else rows = [];
 
         if (mounted && rows.length) {
-          const normalized = rows.map((r: any, i: number) => ({
-            id: r.id ?? r._id ?? r.product_id ?? `srv-${i}`,
-            name: r.name ?? r.title ?? `Product ${i + 1}`,
-            price: Number(r.price ?? r.amount ?? 0),
-            unit: r.grams ?? r.unit ?? r.size ?? undefined,
-            image: r.image ?? r.image_url ?? undefined,
-            image_url: r.image_url ?? undefined,
-            sku: r.sku ?? r.code ?? undefined,
-            stock: r.stock !== undefined ? Number(r.stock) : undefined,
-            category: r.category && typeof r.category === "object" ? r.category.name ?? r.category : r.category,
-          }));
+          const normalized = rows.map((r: any, i: number) => {
+            // try to extract category id if category is an object
+            const catObj = r.category && typeof r.category === "object" ? r.category : null;
+            const categoryId = catObj ? (catObj.id ?? catObj._id ?? catObj.categoryId ?? null) : (r.category_id ?? r.categoryId ?? null);
+            const categoryName = catObj ? (catObj.name ?? catObj.title ?? String(catObj)) : (r.category ?? undefined);
+
+            return {
+              id: r.id ?? r._id ?? r.product_id ?? `srv-${i}`,
+              name: r.name ?? r.title ?? `Product ${i + 1}`,
+              price: Number(r.price ?? r.amount ?? 0),
+              unit: r.grams ?? r.unit ?? r.size ?? undefined,
+              image: r.image ?? r.image_url ?? undefined,
+              image_url: r.image_url ?? undefined,
+              sku: r.sku ?? r.code ?? undefined,
+              stock: r.stock !== undefined ? Number(r.stock) : undefined,
+              category: categoryName,
+              category_id: categoryId ?? null, // NEW: keep id when available
+            } as Product;
+          });
           setProducts(normalized);
         }
       } catch (err) {
@@ -1173,7 +2071,7 @@ export default function POS(): JSX.Element {
 
   useEffect(() => {
     setPage(1);
-  }, [query, products, viewMode]);
+  }, [query, products, viewMode, selectedCategoryId, selectedCategoryName]);
 
   /* ---------- cart calculations ---------- */
   const cartLines: CartLine[] = useMemo(() => {
@@ -1197,9 +2095,30 @@ export default function POS(): JSX.Element {
   /* ---------- filtering & pagination; pageSize depends on viewMode ---------- */
   const pageSize = viewMode === "table" ? 7 : 12;
   const visibleProducts = products.filter((p) => {
-    if (!query) return true;
-    const q = query.toLowerCase();
-    return p.name.toLowerCase().includes(q) || String(p.sku || "").toLowerCase().includes(q) || String(p.category || "").toLowerCase().includes(q);
+    // filter by query first
+    if (query) {
+      const q = query.toLowerCase();
+      if (!(p.name.toLowerCase().includes(q) || String(p.sku || "").toLowerCase().includes(q) || String(p.category || "").toLowerCase().includes(q))) {
+        return false;
+      }
+    }
+
+    // If a category is selected, filter by category id first, fall back to category name
+    if (selectedCategoryId !== null && selectedCategoryId !== undefined && selectedCategoryId !== "") {
+      // match by category_id if available
+      if (p.category_id !== null && p.category_id !== undefined) {
+        return String(p.category_id) === String(selectedCategoryId);
+      }
+      // otherwise match by name (case-insensitive) using selectedCategoryName
+      if (selectedCategoryName) {
+        return String(p.category || "").toLowerCase() === String(selectedCategoryName).toLowerCase();
+      }
+      // if no category id and no selectedCategoryName, keep the product (defensive)
+      return true;
+    }
+
+    // no category filter active => keep
+    return true;
   });
 
   const totalPages = Math.max(1, Math.ceil(visibleProducts.length / pageSize));
@@ -1431,7 +2350,24 @@ export default function POS(): JSX.Element {
     return `https://source.unsplash.com/featured/400x400/?${seed}`;
   };
 
-  /* ---------- UI ---------- */
+  /* ---------- Category selection handler ---------- */
+  const handleCategorySelect = (cat: any | null) => {
+    if (!cat) {
+      setSelectedCategoryId(null);
+      setSelectedCategoryName(null);
+      return;
+    }
+    // cat may include { id, title/name, image_url, ... } depending on your carousel/context
+    const id = cat.id ?? cat.category_id ?? cat.categoryId ?? null;
+    const name = cat.title ?? cat.name ?? cat.category ?? null;
+    setSelectedCategoryId(id);
+    setSelectedCategoryName(name ? String(name) : null);
+
+    // OPTIONAL: if you want to request products from server filtered by category,
+    // you could call an endpoint here (not implemented so as to not change behaviour).
+    // Example: api.get('/admin/products/show', { params: { category_id: id }})
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
@@ -1439,30 +2375,21 @@ export default function POS(): JSX.Element {
       {/* Top container with search + controls */}
       <div className="max-w-full mx-auto p-4 lg:px-8">
         <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm mb-6">
-         <div className="flex items-center gap-3 mb-4">
-  <div>
-    <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-      <input
-        type="search"
-        placeholder="Search products, SKU or category..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="pl-9 pr-4 py-2 rounded-full border w-full focus:ring-2 focus:ring-indigo-300"
-      />
-    </div>
+               <div className="flex items-center gap-3 mb-4">
+  <div style={{width:"48%"}}>    
+    {/* pass onSelect to your carousel. it will call with the category object when selected */}
+    <Categorycarosel onSelect={handleCategorySelect} />
   </div>
-
-  {/* Show table/cards button right beside search bar */}
-  <button
-    onClick={() => setViewMode((v) => (v === "table" ? "cards" : "table"))}
-    className="px-4 py-2 rounded-md border bg-white hover:bg-slate-50 text-sm flex-shrink-0"
-    title="Toggle view"
-  >
-    {viewMode === "table" ? "Show as Cards" : "Show as Table"}
-  </button>
+  <div className="flex-shrink-0">
+    <button
+      onClick={() => setViewMode((v) => (v === "table" ? "cards" : "table"))}
+      className="px-4 py-2 rounded-md border bg-white hover:bg-slate-50 text-sm"
+      title="Toggle view"
+    >
+      {viewMode === "table" ? "Show as Cards" : "Show as Table"}
+    </button>
+  </div>
 </div>
-
 
           {/* Info line */}
           <div className="flex items-center justify-between mb-4">
@@ -1471,6 +2398,8 @@ export default function POS(): JSX.Element {
               Showing {Math.min((page - 1) * pageSize + 1, visibleProducts.length)} - {Math.min(page * pageSize, visibleProducts.length)} of {visibleProducts.length}
             </div>
           </div>
+
+          {/* rest of your component unchanged... */}
           <div className="relative">
             <div className="transition-all mr-[28%]">
               {viewMode === "table" ? (
@@ -1630,7 +2559,7 @@ export default function POS(): JSX.Element {
                               <div className="text-base font-semibold">₹ {Number(p.price).toFixed(2)}</div>
                               <div className="text-xs text-slate-600">Stock: {p.stock ?? "-"}</div>
                             </div>
-``
+
                             <div className="mt-3 space-y-2">
                               {inCartQty === 0 ? (
                                 <button onClick={() => addToCart(p, 1)} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-emerald-600 text-white text-sm">
@@ -1644,8 +2573,6 @@ export default function POS(): JSX.Element {
                                 </div>
                               )}
                               <div className="grid grid-cols-2 gap-2">
-                                {/* <button onClick={() => openAdminEdit(p)} className="px-3 py-2 rounded-md border text-sm">Edit</button>
-                                <button onClick={() => requestDelete(p.id!, p.name)} className="px-3 py-2 rounded-md border text-sm">Delete</button> */}
                               </div>
                             </div>
                           </div>
@@ -1699,7 +2626,6 @@ export default function POS(): JSX.Element {
               <h3 className="text-xl font-semibold">Cart</h3>
               <div className="text-sm text-slate-500">{itemsCount} items</div>
             </div>
-            {/* intentionally no close button (fixed) */}
             <div />
           </div>
 
@@ -1765,7 +2691,6 @@ export default function POS(): JSX.Element {
               <div className="text-right font-medium">- ₹ {discountAmount.toFixed(2)}</div>
             </div>
             <div className="flex items-center gap-4 mb-3 flex-wrap">
-  {/* left: discount controls */}
   <div className="flex items-center gap-4">
     <select
       value={discount.type}
@@ -1790,7 +2715,6 @@ export default function POS(): JSX.Element {
     />
   </div>
 
-  {/* right: GST column pinned to the end */}
   <div className="ml-auto mb-0 w-36 sm:w-40">
     <label className="text-sm text-slate-600 block mb-1">GST %</label>
     <select
@@ -1819,51 +2743,46 @@ export default function POS(): JSX.Element {
               <div className="text-2xl font-extrabold">₹ {total.toFixed(2)}</div>
             </div>
 
-            {/* All three dropdowns/inputs on one line */}
-<div className="flex flex-wrap items-end gap-3 mb-3">
-  {/* Customer name */}
-  <div className="flex-1 min-w-[200px]">
-    <label className="text-sm text-slate-600 block mb-1">Customer name</label>
-    <input
-      value={customerName}
-      onChange={(e) => setCustomerName(e.target.value)}
-      placeholder="Customer name"
-      className="w-full p-2 border rounded"
-    />
-  </div>
+            <div className="flex flex-wrap items-end gap-3 mb-3">
+              <div className="flex-1 min-w-[200px]">
+                <label className="text-sm text-slate-600 block mb-1">Customer name</label>
+                <input
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Customer name"
+                  className="w-full p-2 border rounded"
+                />
+              </div>
 
-  {/* WhatsApp number */}
-  <div className="flex-1 min-w-[200px]">
-    <label className="text-sm text-slate-600 block mb-1">WhatsApp Number</label>
-    <input
-      value={customerPhone}
-      onChange={(e) => setCustomerPhone(e.target.value)}
-      placeholder="10+ digits"
-      className="w-full p-2 border rounded"
-      inputMode="tel"
-    />
-  </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="text-sm text-slate-600 block mb-1">WhatsApp Number</label>
+                <input
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="10+ digits"
+                  className="w-full p-2 border rounded"
+                  inputMode="tel"
+                />
+              </div>
 
-  {/* Payment dropdown */}
-  <div className="flex-1 min-w-[180px]">
-    <label className="text-sm text-slate-600 block mb-1">Payment</label>
-    <select
-      value={paymentMethod}
-      onChange={(e) => {
-        const val = e.target.value as "card" | "upi" | "cash" | "";
-        if (val === "card" || val === "upi" || val === "cash" || val === "")
-          setPaymentMethod(val);
-        else setPaymentMethod("");
-      }}
-      className="p-2 border rounded bg-white w-full"
-    >
-      <option value="">Select payment</option>
-      <option value="card">Card</option>
-      <option value="upi">UPI</option>
-      <option value="cash">Cash</option>
-    </select>
-  </div>
-</div>
+              <div className="flex-1 min-w-[180px]">
+                <label className="text-sm text-slate-600 block mb-1">Payment</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => {
+                    const val = e.target.value as "card" | "upi" | "cash" | "";
+                    if (val === "card" || val === "upi" || val === "cash" || val === "") setPaymentMethod(val);
+                    else setPaymentMethod("");
+                  }}
+                  className="p-2 border rounded bg-white w-full"
+                >
+                  <option value="">Select payment</option>
+                  <option value="card">Card</option>
+                  <option value="upi">UPI</option>
+                  <option value="cash">Cash</option>
+                </select>
+              </div>
+            </div>
 
             <div className="flex gap-3">
               <button onClick={() => void handleCheckout()} disabled={isCheckingOut || cartLines.length === 0 || !validName(customerName) || !validPhone(customerPhone) || !paymentMethod} className="ml-auto px-6 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60">
@@ -1874,7 +2793,7 @@ export default function POS(): JSX.Element {
         </div>
       </aside>
 
-      {/* ADMIN PANEL - fixed (no overlay, no close button) */}
+      {/* (remaining admin drawer + delete confirm unchanged) */}
       {adminModalOpen && (
         <aside
           className="fixed top-0 right-[38%] lg:right-[38%] h-full z-45 bg-white shadow-2xl border-l"
@@ -1927,7 +2846,6 @@ export default function POS(): JSX.Element {
         </aside>
       )}
 
-      {/* delete confirm (overlay kept so user can cancel) */}
       {deleteTarget && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteTarget(null)} />
