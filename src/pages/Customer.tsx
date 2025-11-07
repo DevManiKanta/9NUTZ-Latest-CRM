@@ -2678,7 +2678,6 @@ export default function POS(): JSX.Element {
               </div>
             )}
           </div>
-
           <div className="mt-4 border-t pt-4">
             <div className="grid grid-cols-2 gap-2 mb-2">
               <div className="text-sm text-slate-600">Subtotal</div>

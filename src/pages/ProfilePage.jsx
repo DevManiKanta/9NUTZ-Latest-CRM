@@ -1186,12 +1186,12 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          // NOTE: do NOT set Content-Type when using FormData
         },
         body: fd,
       });
 
       const data = await res.json().catch(() => null);
+      console.log("TEST",data)
       if (data) {
         window.location.reload();
       }
@@ -1206,7 +1206,6 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
         toast.error(serverMsg);
         throw new Error(serverMsg);
       }
-
       const updatedSettings = {
         site_name: data?.site_name ?? data?.settings?.site_name ?? data?.data?.site_name ?? form.site_name,
         email: data?.email ?? data?.settings?.email ?? form.email,
@@ -1277,7 +1276,6 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
       } catch (e) {
         console.warn("update localStorage user failed:", e);
       }
-
       try {
         const rawS = localStorage.getItem("settings");
         if (rawS) {
@@ -1331,7 +1329,7 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
             { key: "sales", label: "Sales Banner" },
             { key: "social", label: "Social Media" },
             { key: "shop", label: "Shop Settings" },
-            { key: "discounts", label: "Discounts" },
+            // { key: "discounts", label: "Discounts" },
           ].map((t) => (
             <Button
               key={t.key}

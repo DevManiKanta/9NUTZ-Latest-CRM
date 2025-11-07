@@ -280,6 +280,7 @@ const navigationItems = [
   { id: "vendor-management", label: "Vendor Management", path: "/sku/vendor-Management", icon: Building2 },
     { id: "Reports", label: "Reports", path: "/Reports", icon: Image },
      { id: "Reports", label: "CustomerList", path: "/CustomerList", icon: Image },
+       { id: "Discount", label: "Discount", path: "/Discount", icon:DollarSign  },
 ];
 
 const settingsChildren = [
@@ -288,7 +289,6 @@ const settingsChildren = [
   // { id: "Sales-Banner", label: "Sales-Banner", path: "/Sales-Banner", icon: Building2 },
   // { id: "Social-Media", label: "Social-Media", path: "/Social-Media", icon:Instagram  },
   // { id: "Shop-Settings", label: "Shop-Settings", path: "/Shop-Settings", icon:Building2  },
-  //  { id: "Discount", label: "Discount", path: "/Discount", icon:Building2  },
 ];
 
 export const DashboardSidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
