@@ -1702,7 +1702,7 @@ export default function TestProducts() {
       <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
       <div className="w-full px-4 md:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 w-full">
-          <div><h1 className="text-2xl sm:text-3xl font-bold">Products</h1></div>
+          {/* <div><h1 className="text-2xl sm:text-3xl font-bold">Products</h1></div> */}
 
           <div className="flex items-center gap-2 w-full sm:w-auto p-2">
             <Button variant="ghost" onClick={() => void handleRefresh()} aria-label="Refresh products" className="ml-2">

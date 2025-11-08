@@ -798,7 +798,7 @@ const SkuMovement: React.FC = () => {
       <Toaster position="top-right" />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h2 className="text-2xl font-semibold text-slate-800">Vendor Management</h2>
+        <h2 className="text-2xl font-semibold text-slate-800"></h2>
         <div className="flex items-center gap-2">
           <button
             onClick={openAdd}

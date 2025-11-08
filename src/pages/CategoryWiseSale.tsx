@@ -861,7 +861,7 @@ export default function CategoriesShowcase(): JSX.Element {
       <div className="grid grid-cols-3 items-center gap-4 mb-6">
         {/* left: title */}
         <div className="col-span-1">
-          <h1 className="text-2xl font-semibold text-slate-800">Categories</h1>
+          {/* <h1 className="text-2xl font-semibold text-slate-800">Categories</h1> */}
         </div>
 
         {/* center: search - centered (commented out) */}

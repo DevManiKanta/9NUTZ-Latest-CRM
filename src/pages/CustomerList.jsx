@@ -412,10 +412,9 @@ export default function CustomerList() {
     <div className="p-4">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-xl font-semibold">Customers</h2>
-          <div className="text-xs text-slate-500">Click eye to view full order history in the sidebar.</div>
+          {/* <h2 className="text-xl font-semibold">Customers</h2>
+          <div className="text-xs text-slate-500">Click eye to view full order history in the sidebar.</div> */}
         </div>
-
         <div className="flex items-center gap-2">
           <div className="flex items-center bg-white border rounded-md px-2 py-1 gap-2 shadow-sm">
             <input

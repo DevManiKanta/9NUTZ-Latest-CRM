@@ -281,6 +281,7 @@ const navigationItems = [
     { id: "Reports", label: "Reports", path: "/Reports", icon: Image },
      { id: "Reports", label: "CustomerList", path: "/CustomerList", icon: Image },
        { id: "Discount", label: "Discount", path: "/Discount", icon:DollarSign  },
+          { id: "Discount", label: "Staff-Management", path: "/Staff-Management", icon:Users },
 ];
 
 const settingsChildren = [

@@ -25,7 +25,7 @@ import OrderReport from "./pages/OrderReport";
 import QrPayments from "./pages/QrPayments";
 import PayLater from "./pages/PayLater";
 import DiscountInvoices from "./pages/DiscountInvoices";
-import TeleCallerList from "./pages/TeleCallerList";
+import TeleCallerList from "./pages/StaffManagemnet";
 import TeleCallerStatus from "./pages/TeleCallerStatus";
 import CrmReport from "./pages/CrmReport";
 // NEW: SKU pages (place these files at src/pages/sku/ if not present)
@@ -254,7 +254,7 @@ const App = () => (
                  {/* ---------- end PAY later routes  ---------- */}
     {/* ---------- TeleCaller routes (new) ---------- */}
             <Route
-              path="/Telecaller/TelecallerList"
+              path="/Staff-Management"
               element={
                 <ProtectedRoute>
                   <DashboardLayout>

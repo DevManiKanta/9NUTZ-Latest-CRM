@@ -484,15 +484,13 @@ export default function CategoryCarousel({
   className={`snap-start shrink-0 w-32 sm:w-36 md:w-40 lg:w-20 rounded-lg overflow-hidden bg-white border shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-300 ${
     active ? "ring-2 ring-indigo-500" : ""
   }`}
-
-  style={{ border: "1px solid grey" }}
 >
   <div className="relative h-10 sm:h-24 md:h-20">
     <img
       src={it.image}
       alt={it.title}
       loading="lazy"
-      className="w-full h-full object-cover object-center" 
+      className="w-full h-full object-cover object-center mt-2" 
       onError={(e) => {
         e.currentTarget.src = `https://source.unsplash.com/600x400/?${encodeURIComponent(it.title)}`;
       }}
