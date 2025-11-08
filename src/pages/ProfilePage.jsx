@@ -1326,9 +1326,9 @@ export default function ProfilePage({ initialUser = null, initialOrders = [] }) 
             { key: "settings", label: "Site Settings" },
             // { key: "gst", label: "GST Management" },
             // { key: "banners", label: "Banners" },
+              { key: "shop", label: "Shop Settings" },
             { key: "sales", label: "Sales Banner" },
             { key: "social", label: "Social Media" },
-            { key: "shop", label: "Shop Settings" },
             // { key: "discounts", label: "Discounts" },
           ].map((t) => (
             <Button

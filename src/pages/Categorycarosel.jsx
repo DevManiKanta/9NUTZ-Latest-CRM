@@ -309,8 +309,6 @@ export default function CategoryCarousel({
           image: c.image_url ?? c.image ?? "",
         })) : []);
 
-  console.log("Categories in Carousel (context):", categories);
-
   // helper to scroll programmatically
   const scrollBy = (offset) => {
     const el = scrollerRef.current;
@@ -486,6 +484,8 @@ export default function CategoryCarousel({
   className={`snap-start shrink-0 w-32 sm:w-36 md:w-40 lg:w-20 rounded-lg overflow-hidden bg-white border shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-300 ${
     active ? "ring-2 ring-indigo-500" : ""
   }`}
+
+  style={{ border: "1px solid grey" }}
 >
   <div className="relative h-10 sm:h-24 md:h-20">
     <img
@@ -499,7 +499,6 @@ export default function CategoryCarousel({
     />
     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
     <div className="absolute left-2 bottom-2 text-white">
-      {/* optional overlay title */}
     </div>
   </div>
 
