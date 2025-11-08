@@ -2135,20 +2135,29 @@ export default function TestProducts() {
                       <input value={form.sku} onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))} className="block w-full border rounded-md p-2" placeholder="e.g. SKU-12345" />
                     </div>
 
-                    <div className="w-[30%] min-w-[220px]">
-                      <label className="block text-sm font-medium mb-1">Description <span className="text-red-500">*</span></label>
-                      <input
-                        ref={descInputRef}
-                        value={form.description}
-                        onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                        onFocus={() => setIsEditorOpen(true)}
-                        className={`block w-full border rounded-md p-2 focus:outline-none ${errors.description ? "border-red-400" : "border-slate-200"}`}
-                        placeholder="Click to edit description (rich text)"
-                        readOnly
-                      />
-                      {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
-                    </div>
+                    <div className="w-full">
+  <label className="block text-sm font-medium mb-1">
+    Description <span className="text-red-500">*</span>
+  </label>
 
+  <textarea
+    ref={descInputRef}
+    value={form.description}
+    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+    onFocus={() => setIsEditorOpen(true)}
+    placeholder="Click to edit description (rich text)"
+    readOnly
+    rows={4}
+    className={`block w-full border rounded-md p-2 focus:outline-none resize-none ${errors.description ? "border-red-400" : "border-slate-200"}`}
+  />
+
+  {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
+</div>
+                     
+                    <div className="w-[30%] min-w-[220px]">
+                      <label className="block text-sm font-medium mb-1">Video URL</label>
+                      <input value={form.video_url} onChange={(e) => setForm((f) => ({ ...f, video_url: e.target.value }))} className="block w-full border rounded-md p-2" placeholder="https://www.youtube.com/watch?v=" />
+                    </div>
                     <div className="w-[30%] min-w-[220px]">
                       <label className="block text-sm font-medium mb-1">Upload Image</label>
                       <input type="file" accept="image/*" onChange={handleImageChange} className="block w-full text-sm" />
@@ -2159,39 +2168,11 @@ export default function TestProducts() {
                       <label className="block text-sm font-medium mb-1">Additional images</label>
                       <input type="file" accept="image/*" multiple onChange={handleAdditionalImagesChange} className="block w-full text-sm" />
                     </div>
-
-                    <div className="w-[30%] min-w-[220px]">
-                      <label className="block text-sm font-medium mb-1">Video URL</label>
-                      <input value={form.video_url} onChange={(e) => setForm((f) => ({ ...f, video_url: e.target.value }))} className="block w-full border rounded-md p-2" placeholder="https://www.youtube.com/watch?v=" />
-                    </div>
-
                     {/* NEW: show main uploaded image preview below video URL input */}
                     <div className="w-full mt-2">
                       {(form.image || imageFile) && (
-                        <div className="mb-3">
-                          <div className="text-sm text-slate-600 mb-2">Main image preview</div>
-                           <div className="w-24 h-24 rounded-md overflow-hidden border">
-  <img
-    src={String(form.image)}
-    alt="main-preview"
-    className="w-full h-full object-cover"
-    onError={(e) => {
-      e.currentTarget.onerror = null;
-      e.currentTarget.src = IMAGES.DummyImage;
-    }}
-  />
-</div>
-
-                        </div>
-                      )}
-                    </div>
-                      {/* equal-width two column layout (stack on small screens) */}
-<div
-  className="w-full flex flex-col lg:flex-row items-stretch gap-6 mt-4"
-  style={{ border: "1px solid transparent" }} // keep if you want to visually debug; remove or change as needed
->
-  {/* Variants Panel (left on wide screens) */}
-  <div className="w-full lg:w-1/2 flex flex-col">
+                        <div style={{display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: '8px'}}>
+                          <div className="w-full lg:w-1/2 flex flex-col">
     <div className="mt-1 flex-1">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-sm font-semibold">Variants</h4>
@@ -2206,7 +2187,7 @@ export default function TestProducts() {
         </div>
       </div>
 
-      <div className="space-y-2" style={{ border: "1px solid transparent" }}>
+      <div className="space-y-2">
   {form.product_type ? (
     formVariants.length === 0 ? (
       <div className="text-sm text-slate-500">
@@ -2322,6 +2303,27 @@ export default function TestProducts() {
 </div>
     </div>
   </div>
+
+                          {/* <div className="text-sm text-slate-600 mb-2">Main image preview</div> */}
+                           <div className="w-24 h-24 rounded-md overflow-hidden border">
+  <img
+    src={String(form.image)}
+    alt="main-preview"
+    className="w-full h-full object-cover"
+    onError={(e) => {
+      e.currentTarget.onerror = null;
+      e.currentTarget.src = IMAGES.DummyImage;
+    }}
+  />
+</div>
+
+                        </div>
+                      )}
+                    </div>
+                      
+<div
+  className="w-full flex flex-col lg:flex-row items-stretch gap-6 mt-4"
+>
   <div className="w-full lg:w-1/2 flex flex-col">
     <div className="border rounded-md p-3 bg-gray-50 flex-1">
       <div>
