@@ -58,6 +58,7 @@ import FranchiseRequests from "./pages/FranchiseRequests";
 import TestProducts from "./pages/TestProducts";
 import CommingSoon from "./pages/CommingSoon";
 import Bannerspage from "./pages/Bannerspage"
+import TestPos from   "./pages/TestPos";
 import PublicRoute from "@/components/auth/ProtectedRoute";
 import { CategoriesProvider } from "@/components/contexts/categoriesContext";
 import { Provider } from "react-redux";
@@ -145,7 +146,8 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardLayout>
-                    <Customer />
+                    {/* <Customer /> */}
+                     <TestPos/>
                   </DashboardLayout>
                 </ProtectedRoute>
               }

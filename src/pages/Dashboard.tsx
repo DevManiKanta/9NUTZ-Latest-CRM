@@ -270,8 +270,6 @@ const Dashboard = () => {
         // so reaching here means status was 2xx; set dashboard data.
         setDashboardData(json ?? null);
       } catch (err) {
-        // axios error handling: err.response may contain server data
-        console.error("Dashboard fetch error:", err);
         const serverMsg = err?.response?.data?.message ?? err?.response?.data ?? null;
         const msg = (typeof serverMsg === "string" ? serverMsg : null) ?? err?.message ?? "Unable to load dashboard data";
         toast.error(msg);
