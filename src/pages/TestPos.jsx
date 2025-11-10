@@ -1339,10 +1339,10 @@ export default function POS() {
       <div className="max-w-full mx-auto p-4 lg:px-8" >
         <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <div style={{ width: "48%"}}>
+            <div style={{ width: "59%"}}>
               <Categorycarosel onSelect={handleCategorySelect} />
             </div>
-            <div className="flex-shrink-0">
+            {/* <div className="flex-shrink-0">
               <button
                 onClick={() => setViewMode((v) => (v === "table" ? "cards" : "table"))}
                 className="px-4 py-2 rounded-md border bg-white hover:bg-slate-50 text-sm"
@@ -1350,7 +1350,7 @@ export default function POS() {
               >
                 {viewMode === "table" ? "Show as Cards" : "Show as Table"}
               </button>
-            </div>
+            </div> */}
           </div>
 
           {/* Info line */}
@@ -1360,8 +1360,8 @@ export default function POS() {
               Showing 1 - {visibleProducts.length} of {visibleProducts.length}
             </div>
           </div>
-          <div className={`relative ${viewMode === "table" ? "w-[80%]" : "w-full"}`}>
-            <div className="transition-all mr-[28%]">
+          <div className={`relative ${viewMode === "table" ? "w-[100%]" : "w-full"}`}>
+            <div className={`transition-all ${viewMode === "table" ? "" : "mr-0"}`}>
               {viewMode === "table" ? (
                 <div className="hidden md:block overflow-hidden rounded-lg border bg-white w-[75%]">
                   <table className="min-w-full divide-y divide-slate-100">
@@ -1441,7 +1441,7 @@ export default function POS() {
                   </table>
                 </div>
               ) : (
-                <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-5 gap-2 w-[50%]">
+                <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-5 gap-1" style={{width:"60%"}}>
                   {loadingProducts
                     ? Array.from({ length: pageSize }).map((_, i) => (
                       <div key={i} className="animate-pulse p-4 border rounded-xl bg-white" />
@@ -1450,36 +1450,50 @@ export default function POS() {
                       const inCartQty = cartMap[String(p.id)] ?? 0;
                       const imageSrc = p.image_url ?? p.image ?? fallbackFor(p);
                       return (
-                           <article
+                          <article
   key={p.id}
-  onClick={() => addToCart(p, 1)}      
-  className="bg-white border rounded-sm p-1 text-center select-none hover:shadow-sm transition-all"
-  style={{ border: "1px solid rgba(206, 19, 19, 0.06)", width: "100%", maxWidth: 92 }}
+  onClick={() => addToCart(p, 1)}
+  className="bg-white border rounded-md p-2 text-center select-none hover:shadow-md transition-all"
+  style={{
+    border: "1px solid rgba(0,0,0,0.08)",
+    width: "100%",
+    maxWidth: 150, 
+    cursor: "pointer",
+     marginTop:"10px"
+  }}
 >
-  {/* small square icon area */}
-  <div className="mx-auto rounded-sm overflow-hidden bg-white grid place-items-center" style={{ width: 64, height: 64 }}>
+  {/* Larger image area */}
+  <div
+    className="mx-auto rounded-md overflow-hidden bg-slate-50 grid place-items-center"
+    style={{ width: 100, height: 100 }} // increased size: more square and balanced
+  >
     <img
       src={imageSrc}
       alt={p.name}
       className="w-full h-full object-contain"
-      onError={(e) => { e.currentTarget.src = fallbackFor(p); }}
+      onError={(e) => {
+        e.currentTarget.src = fallbackFor(p);
+      }}
     />
   </div>
 
-  {/* label under icon */}
-  <div className="mt-1 px-0">
-    <div className="text-[10px] font-medium text-slate-800 leading-tight truncate" title={p.name}>
+  {/* Product name */}
+  <div className="mt-2 px-1">
+    <div
+      className="text-[11px] font-semibold text-slate-800 leading-tight truncate"
+      title={p.name}
+    >
       {p.name}
     </div>
   </div>
 </article>
+
 
                       );
                     })}
                 </div>
               )}
 
-              {/* MOBILE cards (always) */}
               <div className="md:hidden mt-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {loadingProducts
@@ -1553,7 +1567,7 @@ export default function POS() {
         id="cart-sidebar"
         className={`fixed top-0 right-0 h-full z-50 bg-white shadow-2xl border-l transform transition-transform duration-300
           ${cartOpen ? "translate-x-0" : "translate-x-full"} lg:translate-x-0`}
-        style={{ width: "38%", maxWidth: 820 }}
+        style={{ width: "39%", maxWidth: 820 }}
         role="region"
         aria-label="Cart"
       >
@@ -1572,54 +1586,111 @@ export default function POS() {
             )}
           </div>
 
-          <div className="flex-1 overflow-auto">
-            {cartLines.length === 0 ? (
-              <div className="h-full grid place-items-center text-slate-400">
-                <div className="text-center">
-                  <div className="w-28 h-28 rounded-full bg-slate-100 grid place-items-center mb-4">
-                    <ShoppingCart className="w-6 h-6" />
-                  </div>
-                  <div>No items in cart</div>
-                  <div className="text-sm text-slate-400">Add items from the product list</div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {cartLines.map((ln) => (
-                  <div key={String(ln.product.id)} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 border rounded-lg">
-                    <div className="w-full sm:w-20 h-20 rounded overflow-hidden flex-shrink-0 bg-slate-50">
-                      <img src={ln.product.image_url ?? ln.product.image ?? fallbackFor(ln.product)} alt={ln.product.name} className="object-cover w-full h-full" onError={(e) => { e.currentTarget.src = fallbackFor(ln.product); }} />
+<div className="flex-1 overflow-hidden" >
+  {cartLines.length === 0 ? (
+    <div className="h-full grid place-items-center text-slate-400">
+      <div className="text-center">
+        <div className="w-28 h-28 rounded-full bg-slate-100 grid place-items-center mb-4">
+          <ShoppingCart className="w-6 h-6" />
+        </div>
+        <div>No items in cart</div>
+        <div className="text-sm text-slate-400">Add items from the product list</div>
+      </div>
+    </div>
+  ) : (
+     <div className="h-full flex flex-col overflow-hidden rounded-md border">
+  <div className="overflow-auto" style={{ maxHeight: "56vh", margin: "10px", }}>
+    <table className="min-w-full table-fixed text-[12px] border-collapse">
+      {/* sticky header */}
+      <thead className="sticky top-0 z-10">
+        <tr className="bg-blue-700 text-black text-xs">
+          {/* <th className="p-2 w-8 text-left">No.</th> */}
+          <th className="p-2 w-28 text-center text-lg">Item No.</th>
+          <th className="p-2 text-left  text-lg">Item Name</th>
+          {/* <th className="p-2 w-24 text-left">Lot No.</th> */}
+          <th className="p-2 w-14 text-center  text-lg">Qty.</th>
+          <th className="p-2 w-24 text-right  text-lg">Price</th>
+          {/* <th className="p-2 w-20 text-">Disc.</th> */}
+          {/* <th className="p-2 w-20 text-right">Tax</th> */}
+          <th className="p-2 w-28 text-right  text-lg">Amount</th>
+          {/* <th className="p-2 w-20 text-left">UOM</th> */}
+        </tr>
+      </thead>
+
+      <tbody className="divide-y divide-slate-100 bg-white" style={{border:"0.5px solid black"}}>
+        {cartLines.length === 0 ? (
+          <tr>
+            <td colSpan={6} className="p-6 text-center text-slate-400">
+              No items added
+            </td>
+          </tr>
+        ) : (
+          cartLines.map((ln, i) => {
+            const prod = ln.product;
+            const tax = (ln.lineTotal * gstPercent) / 100;
+            return (
+              <tr key={String(prod.id)} className="hover:bg-slate-50" style={{border:"1px solid black"}}>
+                {/* Item No */}
+                <td className="p-2 w-25 align-top text-xs text-slate-600 text-center">
+                  {String(prod.id).slice(0, 12)}
+                </td>
+                {/* Item Name + small image */}
+                <td className="p-2 align-top" style={{border:"1px solid black"}}>
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded overflow-hidden bg-slate-50 flex-shrink-0 border">
+                      <img
+                        src={prod.image_url ?? prod.image ?? fallbackFor(prod)}
+                        alt={prod.name}
+                        className="object-contain w-full h-full"
+                        onError={(e) => {
+                          e.currentTarget.src = fallbackFor(prod);
+                        }}
+                      />
                     </div>
-                    <div className="flex-1 w-full">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="font-medium text-slate-800">{ln.product.name}</div>
-                          <div className="text-sm text-slate-500 mt-1">{ln.product.unit ?? ln.product.sku}</div>
-                        </div>
-
-                        <div className="text-right">
-                          <div className="font-semibold">₹ {(ln.product.price * ln.qty).toFixed(2)}</div>
-                          <div className="text-xs text-slate-500">₹ {ln.product.price.toFixed(2)} x {ln.qty}</div>
-                        </div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-slate-800 text-sm truncate leading-tight">
+                        {prod.name}
                       </div>
-
-                      <div className="mt-3 flex flex-wrap gap-2 items-center">
-                        <div className="inline-flex items-center gap-2 border rounded px-1">
-                          <button onClick={() => dec(ln.product.id)} className="px-2 py-1 rounded"><Minus /></button>
-                          <div className="px-3 py-1 text-sm">{ln.qty}</div>
-                          <button onClick={() => inc(ln.product.id)} className="px-2 py-1 rounded"><Plus /></button>
-                        </div>
-
-                        <button onClick={() => removeLine(ln.product.id)} className="ml-auto px-3 py-1 rounded border text-sm inline-flex items-center gap-2">
-                          <Trash2 className="w-4 h-4" /> Remove
-                        </button>
+                      <div className="text-xs text-slate-500 mt-0.5 leading-tight">
+                        {prod.unit ?? prod.sku}
                       </div>
                     </div>
                   </div>
-                ))} 
-              </div>
-            )}
-          </div>
+                </td>
+
+                {/* Qty */}
+                <td className="p-2 w-14 align-top text-center" style={{border:"1px solid black"}}>
+                  <div className="inline-flex items-center justify-center border rounded px-1">
+                    <button onClick={() => dec(prod.id)} className="px-1 py-0.5" aria-label="decrease">
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <span className="px-2 text-[11px]">{ln.qty}</span>
+                    <button onClick={() => inc(prod.id)} className="px-1 py-0.5" aria-label="increase">
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+                </td>
+
+                {/* Sales Price */}
+                <td className="p-2 w-24 align-top text-right text-[11px]" style={{border:"1px solid black"}}>
+                  ₹ {Number(prod.price || 0).toFixed(2)}
+                </td>
+
+                {/* Amount (you kept Tax hidden in header; I compute tax below but show amount column only) */}
+                <td className="p-2 w-28 align-top text-right font-semibold text-[11px]">
+                  ₹ {ln.lineTotal.toFixed(2)}
+                </td>
+              </tr>
+            );
+          })
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+  )}
+</div>
 
           <div className="mt-4 border-t pt-4">
             <div className="flex flex-wrap justify-between items-center gap-4 mb-2 text-sm">

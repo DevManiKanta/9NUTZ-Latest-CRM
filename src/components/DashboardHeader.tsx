@@ -190,38 +190,22 @@ const DashboardHeader: React.FC<HeaderProps> = ({ onMenuToggle, searchValue, onS
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
       {/* Left: Logo + Search */}
-      <div className="flex items-center gap-4 flex-1 max-w-3xl">
-        <div className="w-25 h-10 flex items-center justify-center overflow-hidden">
-          {/* <img
+      <div className="flex items-center gap-4 flex-1 max-w-2xl" >
+        <div className="w-[80%] h-10 flex items-center justify-center overflow-hidden">
+          <img
             src={logoSrc}
             alt={siteName}
             className="w-full h-full object-contain"
             onError={(e) => {
               const el = e.currentTarget as HTMLImageElement;
-              // final fallback to bundled image
               if (el.src !== IMAGES.Nutz) el.src = IMAGES.Nutz;
             }}
-          /> */}
-          <div className="flex items-baseline gap-3">
-            <h1 className="text-lg font-bold"> {routeLabel}</h1>
+          />
+          <div className="flex items-baseline gap-5" style={{ marginLeft:5,width:"100%" }}>
+            <h1 className="text-lg font-bold">{routeLabel}</h1>
           </div>
         </div>
-
-        {/* Search - kept commented as in original */}
-        {/* <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Search..."
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 pr-4 bg-gray-50 border border-gray-200 rounded-full h-10 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300"
-            aria-label="Search"
-          />
-        </div> */}
       </div>
-
-      {/* Right: Plus popup, Notifications, Settings, User */}
       <div className="flex items-center gap-4">
         {/* Plus / quick tabs */}
         <div className="relative">

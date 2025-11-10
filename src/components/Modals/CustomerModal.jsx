@@ -55,10 +55,10 @@ export default function CustomerModal({
   }
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 mr-25">
       <div   className="absolute inset-0 bg-white/50 border border-black" onClick={onClose} />
       <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-5 z-10">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4" >
           <h3 className="text-lg font-semibold">Customer details</h3>
           <button onClick={onClose} aria-label="Close" className="text-slate-500 hover:text-slate-700">
             ✕
@@ -105,7 +105,7 @@ export default function CustomerModal({
           {error && <div className="text-sm text-red-600">{error}</div>}
         </div>
 
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 flex justify-center gap-2">
           <button type="button" onClick={onClose} className="px-4 py-2 rounded border">
             Cancel
           </button>

@@ -1,24 +1,9 @@
 
-
 // import React, { useEffect, useRef, useState } from "react";
-// import { useCategories } from "../components/contexts/categoriesContext"; // adjust path
-// const ITEMS = [
-//   { id: "c1", title: "Millets", subtitle: "Healthy grains", image: "https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38?auto=format&fit=crop&w=1200&q=80" },
-//   { id: "c2", title: "Sweets", subtitle: "Tasty treats", image: "https://images.unsplash.com/photo-1544085311-84d5c97b82a3?auto=format&fit=crop&w=1200&q=80" },
-//   { id: "c3", title: "Flours", subtitle: "Baking essentials", image: "https://images.unsplash.com/photo-1542444459-db5a1f5b8b8e?auto=format&fit=crop&w=1200&q=80" },
-//   { id: "c4", title: "Dry Fruits", subtitle: "Nuts & mixes", image: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?auto=format&fit=crop&w=1200&q=80" },
-//   { id: "c5", title: "Snacks", subtitle: "Ready to eat", image: "https://images.unsplash.com/photo-1543353071-087092ec393e?auto=format&fit=crop&w=1200&q=80" },
-//   { id: "c6", title: "Pulses", subtitle: "Protein rich", image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=1200&q=80" },
-//   { id: "c7", title: "Spices", subtitle: "Flavorful", image: "https://images.unsplash.com/photo-1505250469679-203ad9ced0cb?auto=format&fit=crop&w=1200&q=80" },
-//   { id: "c8", title: "Herbs", subtitle: "Natural flavors", image: "https://images.unsplash.com/photo-1604754742629-3e572824e1ef?auto=format&fit=crop&w=1200&q=80" },
-//    { id: "c5", title: "Snacks", subtitle: "Ready to eat", image: "https://images.unsplash.com/photo-1543353071-087092ec393e?auto=format&fit=crop&w=1200&q=80" },
-//   { id: "c6", title: "Pulses", subtitle: "Protein rich", image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=1200&q=80" },
-//   { id: "c7", title: "Spices", subtitle: "Flavorful", image: "https://images.unsplash.com/photo-1505250469679-203ad9ced0cb?auto=format&fit=crop&w=1200&q=80" },
-//   { id: "c8", title: "Herbs", subtitle: "Natural flavors", image: "https://images.unsplash.com/photo-1604754742629-3e572824e1ef?auto=format&fit=crop&w=1200&q=80" },
-// ];
+// import { useCategories } from "../components/contexts/categoriesContext"; // adjust path if needed
 
 // export default function CategoryCarousel({
-//   items = ITEMS,
+//   items, // optional override (keeps backwards compatibility)
 //   autoplay = true,
 //   interval = 2500,
 //   onSelect, // optional callback: (item) => {}
@@ -34,9 +19,31 @@
 //   const dragMovedRef = useRef(false);
 
 //   const [selectedId, setSelectedId] = useState(null);
-//    const { categories, loading, totalItems, page, perPage, totalPages, fetchCategories, createCategory, updateCategory, deleteCategory, fetchSingle } = useCategories();
+//   const {
+//     categories, // from context
+//     loading,
+//     totalItems,
+//     page,
+//     perPage,
+//     totalPages,
+//     fetchCategories,
+//     createCategory,
+//     updateCategory,
+//     deleteCategory,
+//     fetchSingle,
+//   } = useCategories();
 
-//  console.log("Categories in Carousel:", categories);
+//   // If caller passed `items` prop, prefer it; otherwise use categories from context.
+//   const itemsToRender =
+//     Array.isArray(items) && items.length > 0
+//       ? items
+//       : (Array.isArray(categories) ? categories.map((c) => ({
+//           id: String(c.id),
+//           title: c.category,
+//           subtitle: `${c.productCount ?? 0} Products`,
+//           image: c.image_url ?? c.image ?? "",
+//         })) : []);
+
 //   // helper to scroll programmatically
 //   const scrollBy = (offset) => {
 //     const el = scrollerRef.current;
@@ -66,11 +73,10 @@
 //     };
 
 //     startAuto();
-//     // restart if interval changes etc.
 //     return () => {
 //       if (autoRef.current) clearInterval(autoRef.current);
 //     };
-//   }, [autoplay, interval]);
+//   }, [autoplay, interval, itemsToRender.length]);
 
 //   // mouse drag handlers
 //   useEffect(() => {
@@ -119,7 +125,7 @@
 //       window.removeEventListener("mouseup", onMouseUp);
 //       el.removeEventListener("mouseleave", onMouseLeave);
 //     };
-//   }, []);
+//   }, [itemsToRender.length]);
 
 //   // touch drag handlers (mobile)
 //   useEffect(() => {
@@ -128,22 +134,18 @@
 
 //     let startX = 0;
 //     let startScroll = 0;
-//     let moved = false;
 
 //     const onTouchStart = (e) => {
 //       isDraggingRef.current = true;
-//       moved = false;
 //       startX = e.touches[0].clientX;
 //       startScroll = el.scrollLeft;
 //     };
 //     const onTouchMove = (e) => {
 //       const dx = e.touches[0].clientX - startX;
-//       if (Math.abs(dx) > 5) moved = true;
 //       el.scrollLeft = startScroll - dx;
 //     };
 //     const onTouchEnd = () => {
 //       isDraggingRef.current = false;
-//       // snap similar to mouse end
 //       const child = el.querySelector("[role='listitem']");
 //       if (child) {
 //         const itemWidth = child.getBoundingClientRect().width + parseFloat(getComputedStyle(child).marginRight || 0);
@@ -162,7 +164,7 @@
 //       el.removeEventListener("touchmove", onTouchMove);
 //       el.removeEventListener("touchend", onTouchEnd);
 //     };
-//   }, []);
+//   }, [itemsToRender.length]);
 
 //   // hover pause
 //   const onMouseEnter = () => {
@@ -176,7 +178,6 @@
 //   const handleClickItem = (item, e) => {
 //     // if drag moved, ignore click
 //     if (isDraggingRef.current || dragMovedRef.current) {
-//       // reset moved flag after ignoring
 //       dragMovedRef.current = false;
 //       return;
 //     }
@@ -207,35 +208,40 @@
 //         role="list"
 //         aria-label="Product categories"
 //       >
-//         {items.map((it) => {
+//         {itemsToRender.map((it) => {
 //           const active = selectedId === it.id;
 //           return (
 //             <button
-//               key={it.id}
-//               type="button"
-//               role="listitem"
-//               onClick={(e) => handleClickItem(it, e)}
-//               className={`snap-start shrink-0 w-32 sm:w-36 md:w-40 lg:w-20 rounded-lg overflow-hidden bg-white border shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-300 ${active ? "ring-2 ring-indigo-500" : ""}`}
-//               // style={{border:"1px solid black"}}
-//             >
-//               <div className="relative h-10 sm:h-24 md:h-20">
-//                 <img
-//                   src={it.image}
-//                   alt={it.title}
-//                   loading="lazy"
-//                   className="object-cover w-full h-full"
-//                   onError={(e) => {
-//                     e.currentTarget.src = `https://source.unsplash.com/600x400/?${encodeURIComponent(it.title)}`;
-//                   }}
-//                 />
-//                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-//                 <div className="absolute left-2 bottom-2 text-white">
-//                   {/* <div className="text-[11px] sm:text-xs font-semibold leading-snug">{it.title}</div> */}
-//                 </div>
-//               </div>
-//               <div className="px-2 py-1 text-left">
-//               </div>
-//             </button>
+//   key={it.id}
+//   type="button"
+//   role="listitem"
+//   onClick={(e) => handleClickItem(it, e)}
+//   className={`snap-start shrink-0 w-32 sm:w-36 md:w-40 lg:w-20 rounded-lg overflow-hidden bg-white border shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-300 ${
+//     active ? "ring-2 ring-indigo-500" : ""
+//   }`}
+// >
+//   <div className="relative h-10 sm:h-24 md:h-20">
+//     <img
+//       src={it.image}
+//       alt={it.title}
+//       loading="lazy"
+//       className="w-full h-full object-cover object-center mt-2" 
+//       onError={(e) => {
+//         e.currentTarget.src = `https://source.unsplash.com/600x400/?${encodeURIComponent(it.title)}`;
+//       }}
+//     />
+//     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+//     <div className="absolute left-2 bottom-2 text-white">
+//     </div>
+//   </div>
+
+//   <div className="px-2 py-1 text-left">
+//     <div className="text-xs font-medium text-slate-800 truncate">
+//       {it.title}
+//     </div>
+//   </div>
+// </button>
+
 //           );
 //         })}
 //       </div>
@@ -264,11 +270,12 @@
 // }
 
 
+
 import React, { useEffect, useRef, useState } from "react";
 import { useCategories } from "../components/contexts/categoriesContext"; // adjust path if needed
 
 export default function CategoryCarousel({
-  items, // optional override (keeps backwards compatibility)
+  items, // optional override
   autoplay = true,
   interval = 2500,
   onSelect, // optional callback: (item) => {}
@@ -285,38 +292,33 @@ export default function CategoryCarousel({
 
   const [selectedId, setSelectedId] = useState(null);
   const {
-    categories, // from context
+    categories,
     loading,
-    totalItems,
-    page,
-    perPage,
-    totalPages,
     fetchCategories,
-    createCategory,
-    updateCategory,
-    deleteCategory,
-    fetchSingle,
+    // other methods left unused here but kept for compatibility
   } = useCategories();
 
-  // If caller passed `items` prop, prefer it; otherwise use categories from context.
+  // prefer prop items if provided
   const itemsToRender =
     Array.isArray(items) && items.length > 0
       ? items
-      : (Array.isArray(categories) ? categories.map((c) => ({
-          id: String(c.id),
-          title: c.category,
-          subtitle: `${c.productCount ?? 0} Products`,
-          image: c.image_url ?? c.image ?? "",
-        })) : []);
+      : (Array.isArray(categories)
+          ? categories.map((c) => ({
+              id: String(c.id ?? c._id ?? c.category_id ?? c.name ?? c.title),
+              title: c.category ?? c.name ?? c.title ?? "Category",
+              subtitle: `${c.productCount ?? 0} Products`,
+              image: c.image_url ?? c.image ?? "",
+            }))
+          : []);
 
-  // helper to scroll programmatically
+  // programmatic scroll helper
   const scrollBy = (offset) => {
     const el = scrollerRef.current;
     if (!el) return;
     el.scrollBy({ left: offset, behavior: "smooth" });
   };
 
-  // autoplay (pauses on hover/drag)
+  // autoplay with pause on hover/drag
   useEffect(() => {
     if (!autoplay) return;
     const el = scrollerRef.current;
@@ -325,12 +327,10 @@ export default function CategoryCarousel({
     const startAuto = () => {
       if (autoRef.current) clearInterval(autoRef.current);
       autoRef.current = setInterval(() => {
-        // if user is interacting, skip
         if (isHoverRef.current || isDraggingRef.current) return;
-        // scroll by one card width (approx)
         const step = Math.max(200, Math.floor(el.clientWidth * 0.25));
         if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 10) {
-          el.scrollTo({ left: 0, behavior: "smooth" }); // loop
+          el.scrollTo({ left: 0, behavior: "smooth" });
         } else {
           el.scrollBy({ left: step, behavior: "smooth" });
         }
@@ -369,7 +369,9 @@ export default function CategoryCarousel({
       el.classList.remove("cursor-grabbing");
       const child = el.querySelector("[role='listitem']");
       if (child) {
-        const itemWidth = child.getBoundingClientRect().width + parseFloat(getComputedStyle(child).marginRight || 0);
+        const itemWidth =
+          child.getBoundingClientRect().width +
+          parseFloat(getComputedStyle(child).marginRight || 0);
         const targetIndex = Math.round(el.scrollLeft / itemWidth);
         const targetLeft = targetIndex * itemWidth;
         el.scrollTo({ left: targetLeft, behavior: "smooth" });
@@ -413,7 +415,9 @@ export default function CategoryCarousel({
       isDraggingRef.current = false;
       const child = el.querySelector("[role='listitem']");
       if (child) {
-        const itemWidth = child.getBoundingClientRect().width + parseFloat(getComputedStyle(child).marginRight || 0);
+        const itemWidth =
+          child.getBoundingClientRect().width +
+          parseFloat(getComputedStyle(child).marginRight || 0);
         const targetIndex = Math.round(el.scrollLeft / itemWidth);
         const targetLeft = targetIndex * itemWidth;
         el.scrollTo({ left: targetLeft, behavior: "smooth" });
@@ -441,7 +445,6 @@ export default function CategoryCarousel({
 
   // click handler that ignores clicks triggered by dragging
   const handleClickItem = (item, e) => {
-    // if drag moved, ignore click
     if (isDraggingRef.current || dragMovedRef.current) {
       dragMovedRef.current = false;
       return;
@@ -450,9 +453,17 @@ export default function CategoryCarousel({
     if (typeof onSelect === "function") onSelect(item);
   };
 
+  // small fallback image generator
+  const fallbackSrc = (title) =>
+    `https://source.unsplash.com/600x400/?${encodeURIComponent(title || "food")}`;
+
   return (
-    <div className="relative" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-      {/* Left Button */}
+    <div
+      className="relative"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {/* left nav */}
       <button
         type="button"
         onClick={() => {
@@ -466,10 +477,10 @@ export default function CategoryCarousel({
         ‹
       </button>
 
-      {/* Scroll Container */}
+      {/* scroll area */}
       <div
         ref={scrollerRef}
-        className="flex gap-2 overflow-x-auto scrollbar-none scroll-pl-3 snap-x snap-mandatory px-1 py-1"
+        className="flex gap-3 overflow-x-auto scrollbar-none scroll-pl-3 snap-x snap-mandatory px-2 py-2"
         role="list"
         aria-label="Product categories"
       >
@@ -477,41 +488,47 @@ export default function CategoryCarousel({
           const active = selectedId === it.id;
           return (
             <button
-  key={it.id}
-  type="button"
-  role="listitem"
-  onClick={(e) => handleClickItem(it, e)}
-  className={`snap-start shrink-0 w-32 sm:w-36 md:w-40 lg:w-20 rounded-lg overflow-hidden bg-white border shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-300 ${
-    active ? "ring-2 ring-indigo-500" : ""
-  }`}
->
-  <div className="relative h-10 sm:h-24 md:h-20">
-    <img
-      src={it.image}
-      alt={it.title}
-      loading="lazy"
-      className="w-full h-full object-cover object-center mt-2" 
-      onError={(e) => {
-        e.currentTarget.src = `https://source.unsplash.com/600x400/?${encodeURIComponent(it.title)}`;
-      }}
-    />
-    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-    <div className="absolute left-2 bottom-2 text-white">
-    </div>
+              key={it.id}
+              type="button"
+              role="listitem"
+              onClick={(e) => handleClickItem(it, e)}
+              className={`snap-start shrink-0 w-28 sm:w-28 md:w-32 lg:w-28 rounded-lg overflow-hidden bg-white  transition-shadow duration-150 focus:outline-none ${
+                active ? "ring-2 ring-rose-300" : "border-gray-100"
+              }`}
+              style={{ boxShadow: "0 1px 0 rgba(0,0,0,0.02)" }}
+              title={it.title}
+            >
+              {/* image box */}
+              <div className="flex items-center justify-center ">
+                <div
+                  className="w-20 h-20 rounded-lg overflow-hidden bg-white grid place-items-center"
+                  style={{
+                    // border: "1px solid rgba(249, 226, 226, 0.6)",
+                    padding: 6,
+                  }}
+                >
+                  <img
+                    src={it.image || fallbackSrc(it.title)}
+                    alt={it.title}
+                    loading="lazy"
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = fallbackSrc(it.title);
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="px-2 pb-2 pt-0 text-left">
+  <div className="text-xs text-centre font-medium text-slate-800 truncate">
+    {it.title}
   </div>
-
-  <div className="px-2 py-1 text-left">
-    <div className="text-xs font-medium text-slate-800 truncate">
-      {it.title}
-    </div>
-  </div>
-</button>
-
+</div>      
+            </button>
           );
         })}
       </div>
 
-      {/* Right Button */}
+      {/* right nav */}
       <button
         type="button"
         onClick={() => {
@@ -525,7 +542,7 @@ export default function CategoryCarousel({
         ›
       </button>
 
-      {/* Hide scrollbar on all browsers */}
+      {/* hide scrollbars */}
       <style>{`
         .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
         .scrollbar-none::-webkit-scrollbar { display: none; }
