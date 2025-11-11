@@ -761,6 +761,30 @@
 //       setCatSubmitting(false);
 //     }
 //   };
+
+//   /* --------------------
+//      NEW: client-side search + pagination UI wiring
+//      -------------------- */
+//   const [searchTerm, setSearchTerm] = useState("");
+//   const [page, setPage] = useState(1);
+//   const [pageSize, setPageSize] = useState(10);
+
+//   // filter by name (case-insensitive)
+//   const filteredProducts = products.filter((p) => {
+//     const q = String(searchTerm || "").trim().toLowerCase();
+//     if (!q) return true;
+//     return String(p.name || "").toLowerCase().includes(q);
+//   });
+
+//   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+//   useEffect(() => {
+//     if (page > totalPages) setPage(totalPages);
+//   }, [totalPages, page]);
+
+//   const paginatedProducts = filteredProducts.slice((page - 1) * pageSize, page * pageSize);
+
+//   /* -------------------- end new UI logic -------------------- */
+
 //   return (
 //     <>
 //       <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
@@ -771,6 +795,19 @@
 //             <Button variant="ghost" onClick={() => void handleRefresh()} aria-label="Refresh products" className="ml-2">
 //               <RefreshCw className="h-4 w-4" />
 //             </Button>
+
+//             {/* new: search input beside refresh */}
+//             <div className="ml-2">
+//               <input
+//                 type="text"
+//                 value={searchTerm}
+//                 onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+//                 placeholder="Search products..."
+//                 className="px-3 py-2 border rounded-md w-52 focus:outline-none"
+//                 aria-label="Search products"
+//               />
+//             </div>
+
 //             <Button onClick={() => openCatDrawer()} className="ml-2 "><Plus className="h-4 w-4 mr-2" /> Add Category</Button>
 //             <Button onClick={() => openAddDrawer()} className="ml-2"><Plus className="h-4 w-4 mr-2" /> Add Product</Button>
 //           </div>
@@ -794,12 +831,12 @@
 //               <tbody className="bg-white divide-y divide-slate-100">
 //                 {isLoading ? (
 //                   <tr><td colSpan={9} className="p-6 text-center">Loading products…</td></tr>
-//                 ) : products.length === 0 ? (
+//                 ) : paginatedProducts.length === 0 ? (
 //                   <tr><td colSpan={9} className="p-6 text-center text-slate-500">No products found.</td></tr>
 //                 ) : (
-//                   products.map((p, i) => (
+//                   paginatedProducts.map((p, i) => (
 //                     <tr key={String(p.id)}>
-//                       <td className="px-4 py-3 text-sm align-middle">{i + 1}</td>
+//                       <td className="px-4 py-3 text-sm align-middle">{(page - 1) * pageSize + i + 1}</td>
 //                       <td className="px-4 py-3 align-middle">
 //                         <div className="w-12 h-12 rounded-full overflow-hidden bg-white border">
 //                           <img src={resolveImage(p)} alt={p.name ?? "product"} className="object-cover w-full h-full" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = IMAGES.DummyImage; }} />
@@ -829,6 +866,63 @@
 //             </table>
 //           </div>
 //         </Card>
+
+//         {/* Tailwind pagination UI (client-side) */}
+//         <div className="mt-4 flex items-center justify-between gap-3">
+//           <div className="text-sm text-slate-600">
+//             Showing <strong>{filteredProducts.length === 0 ? 0 : (page - 1) * pageSize + 1}</strong> -{" "}
+//             <strong>{Math.min(filteredProducts.length, page * pageSize)}</strong> of <strong>{filteredProducts.length}</strong>
+//           </div>
+
+//           <div className="flex items-center gap-3">
+//             <select
+//               value={pageSize}
+//               onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+//               className="px-2 py-1 border rounded-md"
+//             >
+//               <option value={5}>5 / page</option>
+//               <option value={10}>10 / page</option>
+//               <option value={20}>20 / page</option>
+//             </select>
+
+//             <div className="inline-flex items-center gap-2">
+//               <button onClick={() => setPage((p) => Math.max(1, p - 1))} className="px-3 py-1 border rounded-md" disabled={page === 1}>
+//                 Prev
+//               </button>
+
+//               {/* page numbers (show up to 7, centered around current page) */}
+//               <div className="inline-flex items-center space-x-1">
+//                 {(() => {
+//                   const pages = [];
+//                   const total = totalPages;
+//                   const maxButtons = 7;
+//                   let start = Math.max(1, page - Math.floor(maxButtons / 2));
+//                   let end = start + maxButtons - 1;
+//                   if (end > total) {
+//                     end = total;
+//                     start = Math.max(1, end - maxButtons + 1);
+//                   }
+//                   for (let p = start; p <= end; p++) {
+//                     pages.push(
+//                       <button
+//                         key={p}
+//                         onClick={() => setPage(p)}
+//                         className={`px-3 py-1 rounded-md border ${p === page ? "bg-indigo-600 text-white" : "bg-white"}`}
+//                       >
+//                         {p}
+//                       </button>
+//                     );
+//                   }
+//                   return pages;
+//                 })()}
+//               </div>
+
+//               <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="px-3 py-1 border rounded-md" disabled={page === totalPages}>
+//                 Next
+//               </button>
+//             </div>
+//           </div>
+//         </div>
 
 //         {isDrawerOpen && (
 //           <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
@@ -886,20 +980,29 @@
 //                       <input value={form.sku} onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))} className="block w-full border rounded-md p-2" placeholder="e.g. SKU-12345" />
 //                     </div>
 
-//                     <div className="w-[30%] min-w-[220px]">
-//                       <label className="block text-sm font-medium mb-1">Description <span className="text-red-500">*</span></label>
-//                       <input
-//                         ref={descInputRef}
-//                         value={form.description}
-//                         onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-//                         onFocus={() => setIsEditorOpen(true)}
-//                         className={`block w-full border rounded-md p-2 focus:outline-none ${errors.description ? "border-red-400" : "border-slate-200"}`}
-//                         placeholder="Click to edit description (rich text)"
-//                         readOnly
-//                       />
-//                       {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
-//                     </div>
+//                     <div className="w-full">
+//   <label className="block text-sm font-medium mb-1">
+//     Description <span className="text-red-500">*</span>
+//   </label>
 
+//   <textarea
+//     ref={descInputRef}
+//     value={form.description}
+//     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+//     onFocus={() => setIsEditorOpen(true)}
+//     placeholder="Click to edit description (rich text)"
+//     readOnly
+//     rows={4}
+//     className={`block w-full border rounded-md p-2 focus:outline-none resize-none ${errors.description ? "border-red-400" : "border-slate-200"}`}
+//   />
+
+//   {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
+// </div>
+                     
+//                     <div className="w-[30%] min-w-[220px]">
+//                       <label className="block text-sm font-medium mb-1">Video URL</label>
+//                       <input value={form.video_url} onChange={(e) => setForm((f) => ({ ...f, video_url: e.target.value }))} className="block w-full border rounded-md p-2" placeholder="https://www.youtube.com/watch?v=" />
+//                     </div>
 //                     <div className="w-[30%] min-w-[220px]">
 //                       <label className="block text-sm font-medium mb-1">Upload Image</label>
 //                       <input type="file" accept="image/*" onChange={handleImageChange} className="block w-full text-sm" />
@@ -910,128 +1013,207 @@
 //                       <label className="block text-sm font-medium mb-1">Additional images</label>
 //                       <input type="file" accept="image/*" multiple onChange={handleAdditionalImagesChange} className="block w-full text-sm" />
 //                     </div>
-
-//                     <div className="w-[30%] min-w-[220px]">
-//                       <label className="block text-sm font-medium mb-1">Video URL</label>
-//                       <input value={form.video_url} onChange={(e) => setForm((f) => ({ ...f, video_url: e.target.value }))} className="block w-full border rounded-md p-2" placeholder="https://www.youtube.com/watch?v=" />
-//                     </div>
-
+//                     {/* NEW: show main uploaded image preview below video URL input */}
 //                     <div className="w-full mt-2">
-//                       {existingExtraImages.length > 0 && (
-//                         <div className="mt-3 grid grid-cols-4 gap-2">
-//                           {existingExtraImages.map((img, idx) => (
-//                             <div key={String(img.id ?? img.url)} className="relative w-full h-20 rounded-md overflow-hidden border">
-//                               <img src={/^https?:\/\//.test(img.url) ? img.url : img.url} alt={`extra-${idx}`} className="w-full h-full object-cover" onError={(e)=>{ e.currentTarget.onerror=null; e.currentTarget.src = IMAGES.DummyImage; }} />
-//                               <button type="button" onClick={() => removeExistingExtraByIndex(idx)} className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white" title="Remove"><X className="w-3 h-3" /></button>
-//                             </div>
-//                           ))}
+//                       {(form.image || imageFile) && (
+//                         <div style={{display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: '8px'}}>
+//                           <div className="w-full lg:w-1/2 flex flex-col">
+//     <div className="mt-1 flex-1">
+//       <div className="flex items-center justify-between mb-3">
+//         <h4 className="text-sm font-semibold">Variants</h4>
+//         <div className="flex items-center gap-2">
+//           <button
+//             type="button"
+//             onClick={addVariantRow}
+//             className="inline-flex items-center gap-2 px-3 py-1 rounded border hover:bg-slate-50"
+//           >
+//             <Plus className="w-4 h-4" /> Add Variant
+//           </button>
+//         </div>
+//       </div>
+
+//       <div className="space-y-2">
+//   {form.product_type ? (
+//     formVariants.length === 0 ? (
+//       <div className="text-sm text-slate-500">
+//         No variants yet. Click "Add Variant" to create one.
+//       </div>
+//     ) : (
+//       formVariants.map((v, idx) => (
+//         <div
+//           key={v.id ?? idx}
+//           className="p-2 border rounded-md bg-gray-50 flex items-center gap-2 flex-nowrap overflow-x-auto"
+//         >
+//           {/* 9Nutz Sweet -> weight + price + stock */}
+//           {form.product_type === "9Nutz Sweet" && (
+//             <>
+//               <input
+//                 placeholder="Weight"
+//                 value={v.label ?? ""}
+//                 onChange={(e) => updateVariantField(idx, "label", e.target.value)}
+//                 className="block border rounded-md p-1.5 text-xs min-w-[100px] flex-shrink-0"
+//               />
+//               <input
+//                 placeholder="Price"
+//                 value={v.price ?? ""}
+//                 onChange={(e) => updateVariantField(idx, "price", e.target.value)}
+//                 className="block border rounded-md p-1.5 text-xs w-[80px] flex-shrink-0 text-right"
+//               />
+//               <input
+//                 type="number"
+//                 placeholder="Stock"
+//                 value={v.stock ?? 0}
+//                 onChange={(e) => updateVariantField(idx, "stock", Number(e.target.value))}
+//                 className="block border rounded-md p-1.5 text-xs w-[70px] flex-shrink-0"
+//               />
+//             </>
+//           )}
+
+//           {/* Clothing -> color, size, price, stock */}
+//           {form.product_type === "Clothing" && (
+//             <>
+//               <input
+//                 placeholder="Color"
+//                 value={v.color ?? ""}
+//                 onChange={(e) => updateVariantField(idx, "color", e.target.value)}
+//                 className="block border rounded-md p-1.5 text-xs min-w-[90px] flex-shrink-0"
+//               />
+//               <input
+//                 placeholder="Size"
+//                 value={v.size ?? ""}
+//                 onChange={(e) => updateVariantField(idx, "size", e.target.value)}
+//                 className="block border rounded-md p-1.5 text-xs w-[70px] flex-shrink-0"
+//               />
+//               <input
+//                 placeholder="Price"
+//                 value={v.price ?? ""}
+//                 onChange={(e) => updateVariantField(idx, "price", e.target.value)}
+//                 className="block border rounded-md p-1.5 text-xs w-[80px] flex-shrink-0 text-right"
+//               />
+//               <input
+//                 type="number"
+//                 placeholder="Stock"
+//                 value={v.stock ?? 0}
+//                 onChange={(e) => updateVariantField(idx, "stock", Number(e.target.value))}
+//                 className="block border rounded-md p-1.5 text-xs w-[70px] flex-shrink-0"
+//               />
+//             </>
+//           )}
+
+//           {/* Gold -> grams + price + purity */}
+//           {form.product_type === "Gold" && (
+//             <>
+//               <input
+//                 placeholder="Grams"
+//                 value={v.grams ?? ""}
+//                 onChange={(e) => updateVariantField(idx, "grams", e.target.value)}
+//                 className="block border rounded-md p-1.5 text-xs min-w-[90px] flex-shrink-0"
+//               />
+//               <input
+//                 placeholder="Price"
+//                 value={v.price ?? ""}
+//                 onChange={(e) => updateVariantField(idx, "price", e.target.value)}
+//                 className="block border rounded-md p-1.5 text-xs w-[80px] flex-shrink-0 text-right"
+//               />
+//               <select
+//                 value={v.purity ?? "24K"}
+//                 onChange={(e) => updateVariantField(idx, "purity", e.target.value)}
+//                 className="block border rounded-md p-1.5 text-xs w-[80px] flex-shrink-0"
+//               >
+//                 <option value="24K">24K</option>
+//                 <option value="22K">22K</option>
+//               </select>
+//             </>
+//           )}
+
+//           {/* Remove Button */}
+//           <div className="ml-auto flex-shrink-0">
+//             <button
+//               type="button"
+//               onClick={() => removeVariantRow(idx)}
+//               className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded border text-xs hover:bg-red-50 text-red-600"
+//               title="Remove variant"
+//             >
+//               <X className="w-3 h-3" />
+//             </button>
+//           </div>
+//         </div>
+//       ))
+//     )
+//   ) : (
+//     <div className="text-sm text-slate-500">
+//       Choose a product type to configure variants.
+//     </div>
+//   )}
+// </div>
+//     </div>
+//   </div>
+
+//                            <div className="w-24 h-24 rounded-md overflow-hidden border">
+//   <img
+//     src={String(form.image)}
+//     alt="main-preview"
+//     className="w-full h-full object-cover"
+//     onError={(e) => {
+//       e.currentTarget.onerror = null;
+//       e.currentTarget.src = IMAGES.DummyImage;
+//     }}
+//   />
+// </div>
+
 //                         </div>
 //                       )}
-
-//                       {newExtraPreviews.length > 0 && (
-//                         <div className="mt-3 grid grid-cols-4 gap-2">
-//                           {newExtraPreviews.map((p, idx) => (
-//                             <div key={idx} className="relative w-full h-20 rounded-md overflow-hidden border">
-//                               <img src={p} alt={`new-extra-${idx}`} className="w-full h-full object-cover" />
-//                               <button type="button" onClick={() => removeNewExtraAt(idx)} className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white" title="Remove"><X className="w-3 h-3" /></button>
-//                             </div>
-//                           ))}
-//                         </div>
-//                       )}
 //                     </div>
-//                   </div>
-//                   {/* Variants Panel */}
-//                   <div className="mt-4">
-//                     <div className="flex items-center justify-between mb-3">
-//                       <h4 className="text-sm font-semibold">Variants</h4>
-//                       <div className="flex items-center gap-2">
-//                         <button type="button" onClick={addVariantRow} className="inline-flex items-center gap-2 px-3 py-1 rounded border hover:bg-slate-50">
-//                           <Plus className="w-4 h-4" /> Add Variant
-//                         </button>
-//                         {/* <div className="text-xs text-slate-400">Dummy variants — replace with API later.</div> */}
-//                       </div>
-//                     </div>
+                      
+// <div
+//   className="w-full flex flex-col lg:flex-row items-stretch gap-6 mt-4"
+// >
+//   <div className="w-full lg:w-1/2 flex flex-col">
+//     <div className="border rounded-md p-3 bg-gray-50 flex-1">
+//       <div>
+//         <div className="text-xs text-slate-600 mb-1">Additional images Preview</div>
+//         <div className="grid grid-cols-3 gap-2">
+//           {existingExtraImages.map((img, idx) => (
+//             <div key={String(img.id ?? img.url)} className="relative w-full h-20 rounded-md overflow-hidden border">
+//               <img
+//                 src={/^https?:\/\//.test(img.url) ? img.url : img.url}
+//                 alt={`extra-${idx}`}
+//                 className="w-full h-full object-cover"
+//                 onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = IMAGES.DummyImage; }}
+//               />
+//               <button
+//                 type="button"
+//                 onClick={() => removeExistingExtraByIndex(idx)}
+//                 className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white"
+//                 title="Remove"
+//               >
+//                 <X className="w-3 h-3" />
+//               </button>
+//             </div>
+//           ))}
+//           {newExtraPreviews.map((p, idx) => (
+//             <div key={idx} className="relative w-full h-20 rounded-md overflow-hidden border">
+//               <img src={p} alt={`new-extra-${idx}`} className="w-full h-full object-cover" />
+//               <button
+//                 type="button"
+//                 onClick={() => removeNewExtraAt(idx)}
+//                 className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white"
+//                 title="Remove"
+//               >
+//                 <X className="w-3 h-3" />
+//               </button>
+//             </div>
+//           ))}
+//           {existingExtraImages.length === 0 && newExtraPreviews.length === 0 && (
+//             <div className="col-span-3 text-xs text-slate-400">No additional images</div>
+//           )}
+//         </div>
+//       </div>
+//     </div>
+//   </div>
+// </div>
 
-//                     <div className="space-y-3">
-//                       {form.product_type ? (
-//                         formVariants.length === 0 ? (
-//                           <div className="text-sm text-slate-500">No variants yet. Click "Add Variant" to create one.</div>
-//                         ) : (
-//                           formVariants.map((v, idx) => (
-//                             <div key={v.id ?? idx} className="p-3 border rounded-md bg-gray-50 flex flex-wrap gap-3 items-center">
-//                               {/* 9Nutz Sweet -> weight + price */}
-//                               {form.product_type === "9Nutz Sweet" && (
-//                                 <>
-//                                   <div className="flex-1 min-w-[160px]">
-//                                     <label className="block text-xs text-slate-600">Weight</label>
-//                                     <input value={v.label ?? ""} onChange={(e) => updateVariantField(idx, "label", e.target.value)} className="block w-full border rounded-md p-2" />
-//                                   </div>
-//                                   <div className="w-[140px]">
-//                                     <label className="block text-xs text-slate-600">Price</label>
-//                                     <input value={v.price ?? ""} onChange={(e) => updateVariantField(idx, "price", e.target.value)} className="block w-full border rounded-md p-2" />
-//                                   </div>
-//                                   <div className="w-[120px]">
-//                                     <label className="block text-xs text-slate-600">Stock</label>
-//                                     <input type="number" value={v.stock ?? 0} onChange={(e) => updateVariantField(idx, "stock", Number(e.target.value))} className="block w-full border rounded-md p-2" />
-//                                   </div>
-//                                 </>
-//                               )}
 
-//                               {/* Clothing -> color, size, price, stock */}
-//                               {form.product_type === "Clothing" && (
-//                                 <>
-//                                   <div className="flex-1 min-w-[140px]">
-//                                     <label className="block text-xs text-slate-600">Color</label>
-//                                     <input value={v.color ?? ""} onChange={(e) => updateVariantField(idx, "color", e.target.value)} className="block w-full border rounded-md p-2" />
-//                                   </div>
-//                                   <div className="w-[110px]">
-//                                     <label className="block text-xs text-slate-600">Size</label>
-//                                     <input value={v.size ?? ""} onChange={(e) => updateVariantField(idx, "size", e.target.value)} className="block w-full border rounded-md p-2" />
-//                                   </div>
-//                                   <div className="w-[120px]">
-//                                     <label className="block text-xs text-slate-600">Price</label>
-//                                     <input value={v.price ?? ""} onChange={(e) => updateVariantField(idx, "price", e.target.value)} className="block w-full border rounded-md p-2" />
-//                                   </div>
-//                                   <div className="w-[100px]">
-//                                     <label className="block text-xs text-slate-600">Stock</label>
-//                                     <input type="number" value={v.stock ?? 0} onChange={(e) => updateVariantField(idx, "stock", Number(e.target.value))} className="block w-full border rounded-md p-2" />
-//                                   </div>
-//                                 </>
-//                               )}
-
-//                               {/* Gold -> grams + price + purity */}
-//                               {form.product_type === "Gold" && (
-//                                 <>
-//                                   <div className="flex-1 min-w-[160px]">
-//                                     <label className="block text-xs text-slate-600">Grams</label>
-//                                     <input value={v.grams ?? ""} onChange={(e) => updateVariantField(idx, "grams", e.target.value)} className="block w-full border rounded-md p-2" />
-//                                   </div>
-//                                   <div className="w-[140px]">
-//                                     <label className="block text-xs text-slate-600">Price</label>
-//                                     <input value={v.price ?? ""} onChange={(e) => updateVariantField(idx, "price", e.target.value)} className="block w-full border rounded-md p-2" />
-//                                   </div>
-//                                   <div className="w-[110px]">
-//                                     <label className="block text-xs text-slate-600">Purity</label>
-//                                     <select value={v.purity ?? "24K"} onChange={(e) => updateVariantField(idx, "purity", e.target.value)} className="block w-full border rounded-md p-2">
-//                                       <option value="24K">24K</option>
-//                                       <option value="22K">22K</option>
-//                                     </select>
-//                                   </div>
-//                                 </>
-//                               )}
-
-//                               <div className="ml-auto">
-//                                 <button type="button" onClick={() => removeVariantRow(idx)} className="inline-flex items-center gap-2 px-3 py-1 rounded border hover:bg-red-50 text-red-600">
-//                                   <X className="w-4 h-4" /> Remove
-//                                 </button>
-//                               </div>
-//                             </div>
-//                           ))
-//                         )
-//                       ) : (
-//                         <div className="text-sm text-slate-500">Choose a product type to configure variants.</div>
-//                       )}
-//                     </div>
 //                   </div>
 
 //                   <div className="flex items-center justify-end gap-3 mt-4">
@@ -1154,6 +1336,11 @@
 // }
 
 
+
+// src/components/TestProducts.jsx
+
+
+
 import React, { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1162,6 +1349,7 @@ import toast, { Toaster } from "react-hot-toast";
 import api from "../api/axios";
 import { IMAGES } from "../assets/images";
 import Editor from "./Editor";
+import { useVariantContext } from "../components/contexts/VariantContext";
 
 const defaultForm = {
   name: "",
@@ -1174,13 +1362,27 @@ const defaultForm = {
   image: "",
   description: "",
   video_url: "",
-  product_type: "", // new field
 };
 
 export default function TestProducts() {
   const basePath = "/admin/products";
+  const variantCtx = useVariantContext();
+  const {
+    loading: ctxLoading,
+    fetchVariations,
+    fetchAttributes,
+    createVariation,
+    updateVariation,
+    deleteVariation,
+    createAttribute,
+    updateAttribute,
+    createVariants,
+    updateVariants,
+    deleteAttribute,
+  } = variantCtx || {};
 
-  // state
+  /* -------------------- state (moved to top to avoid reference errors) -------------------- */
+  // products, categories
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -1192,20 +1394,28 @@ export default function TestProducts() {
   const [editingId, setEditingId] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
+  // attributes raw and loading
+  const [attributesRaw, setAttributesRaw] = useState(null);
+  const [attrsLoading, setAttrsLoading] = useState(false);
+
   // form
   const [form, setForm] = useState({ ...defaultForm });
   const [imageFile, setImageFile] = useState(null); // main image
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // variant UI state (local/dummy)
-  const [formVariants, setFormVariants] = useState([]); // array of variant objects
+  // variants (readonly in drawer)
+  const [formVariants, setFormVariants] = useState([]); // preserves server-provided variants
 
   // extra images
   const [existingExtraImages, setExistingExtraImages] = useState([]);
   const [removedExistingImageIds, setRemovedExistingImageIds] = useState([]);
   const [newExtraFiles, setNewExtraFiles] = useState([]);
   const [newExtraPreviews, setNewExtraPreviews] = useState([]);
+
+  // shop attributes (local mirror of context attributes; toggles active/inactive)
+  // each entry: { id, attribute_name (or name), active: boolean, raw: originalObject }
+  const [shopAttributes, setShopAttributes] = useState([]);
 
   // editor modal for description
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -1224,6 +1434,12 @@ export default function TestProducts() {
   const [catFile, setCatFile] = useState(null);
 
   const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
+
+  /* -------------------- helpers & stable functions -------------------- */
+
+  function makeLocalId() {
+    return `local-attr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  }
 
   const safeTrim = (v) => {
     if (v === undefined || v === null) return undefined;
@@ -1289,11 +1505,63 @@ export default function TestProducts() {
       stock: raw.stock ?? raw.qty ?? null,
       slug: raw.slug ?? "",
       video_url: raw.video_url ?? raw.videoUrl ?? null,
-      variants: finalVariants ?? raw.variants ?? raw.formVariants ?? undefined, // display variants if present
+      variants: finalVariants ?? raw.variants ?? raw.formVariants ?? undefined,
       product_type: raw.product_type ?? "",
+      shop_attributes: raw.shop_attributes ?? raw.shopAttributes ?? raw.selected_shop_attributes ?? undefined,
       ...raw,
     };
   }
+
+  /* -------------------- API wrappers (POST/GET/DELETE) -------------------- */
+
+  const createProductApi = async (payload, file, extraFiles, selectedShopAttrs = []) => {
+    const fd = new FormData();
+    if (payload.name !== undefined) fd.append("name", String(payload.name));
+    if (payload.price !== undefined) fd.append("price", String(payload.price));
+    if (payload.discount_price !== undefined) fd.append("discount_price", String(payload.discount_price));
+    if (payload.discount_amount !== undefined) fd.append("discount_amount", String(payload.discount_amount));
+    if (payload.grams !== undefined) fd.append("grams", String(payload.grams));
+    if (payload.category !== undefined && payload.category !== null) fd.append("category", String(payload.category));
+    if (payload.description !== undefined) fd.append("description", String(payload.description));
+    if (payload.video_url !== undefined && String(payload.video_url).trim() !== "") fd.append("video_url", String(payload.video_url));
+    if (payload.sku !== undefined && String(payload.sku).trim() !== "") fd.append("sku", String(payload.sku));
+    if (Array.isArray(selectedShopAttrs) && selectedShopAttrs.length) {
+      fd.append("shop_attributes", JSON.stringify(selectedShopAttrs));
+    }
+    if (file) fd.append("image", file);
+    if (Array.isArray(extraFiles)) extraFiles.forEach((f) => fd.append("images[]", f));
+    console.log("PAYLOAD",fd )
+    const res = await api.post(`${basePath}/add`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+    return res.data ?? res;
+  };
+
+  const updateProductApi = async (id, payload, file, extraFiles, removeImageIds, selectedShopAttrs = []) => {
+    const fd = new FormData();
+    if (payload.name !== undefined) fd.append("name", String(payload.name));
+    if (payload.price !== undefined) fd.append("price", String(payload.price));
+    if (payload.discount_price !== undefined) fd.append("discount_price", String(payload.discount_price));
+    if (payload.discount_amount !== undefined) fd.append("discount_amount", String(payload.discount_amount));
+    if (payload.grams !== undefined) fd.append("grams", String(payload.grams));
+    if (payload.category !== undefined && payload.category !== null) fd.append("category", String(payload.category));
+    if (payload.description !== undefined) fd.append("description", String(payload.description));
+    if (payload.video_url !== undefined && String(payload.video_url).trim() !== "") fd.append("video_url", String(payload.video_url));
+    if (payload.sku !== undefined && String(payload.sku).trim() !== "") fd.append("sku", String(payload.sku));
+    if (Array.isArray(selectedShopAttrs) && selectedShopAttrs.length) {
+      fd.append("shop_attributes", JSON.stringify(selectedShopAttrs));
+    }
+    if (file) fd.append("image", file);
+    if (Array.isArray(extraFiles)) extraFiles.forEach((f) => fd.append("images[]", f));
+    if (Array.isArray(removeImageIds) && removeImageIds.length) fd.append("remove_image_ids", removeImageIds.join(","));
+    const res = await api.post(`${basePath}/update/${id}`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+    return res.data ?? res;
+  };
+
+  const deleteProductApi = async (id) => {
+    const res = await api.delete(`${basePath}/delete/${id}`);
+    return res.data ?? res;
+  };
+
+  /* -------------------- fetch categories & products -------------------- */
 
   const fetchCategories = async () => {
     setCatLoading(true);
@@ -1352,81 +1620,64 @@ export default function TestProducts() {
     }
   };
 
-  const createProductApi = async (payload, file, extraFiles) => {
-    const fd = new FormData();
-    if (payload.name !== undefined) fd.append("name", String(payload.name));
-    if (payload.price !== undefined) fd.append("price", String(payload.price));
-    if (payload.discount_price !== undefined) fd.append("discount_price", String(payload.discount_price));
-    if (payload.discount_amount !== undefined) fd.append("discount_amount", String(payload.discount_amount));
-    if (payload.grams !== undefined) fd.append("grams", String(payload.grams));
-    if (payload.category !== undefined && payload.category !== null) fd.append("category", String(payload.category));
-    if (payload.description !== undefined) fd.append("description", String(payload.description));
-    if (payload.video_url !== undefined && String(payload.video_url).trim() !== "") fd.append("video_url", String(payload.video_url));
-    if (payload.sku !== undefined && String(payload.sku).trim() !== "") fd.append("sku", String(payload.sku));
-    // NOTE: intentionally not changing API signature to send variants/product_type
-    if (file) fd.append("image", file);
-    if (Array.isArray(extraFiles)) extraFiles.forEach((f) => fd.append("images[]", f));
-    const res = await api.post(`${basePath}/add`, fd, { headers: { "Content-Type": "multipart/form-data" } });
-    return res.data ?? res;
+  /* -------------------- fetch attributes (from VariantContext) -------------------- */
+
+  const fetchAttributesRaw = async (opts = {}) => {
+    setAttrsLoading(true);
+    try {
+      const list = await fetchAttributes?.(opts);
+      // fetchAttributes may return paginated object { data: [...] } or raw array
+      const arr = Array.isArray(list) ? list : (list && list.data && Array.isArray(list.data) ? list.data : []);
+      setAttributesRaw(arr);
+    } catch (err) {
+      console.error("fetchAttributes error", err);
+      toast.error("Failed to load attributes");
+      setAttributesRaw([]);
+    } finally {
+      setAttrsLoading(false);
+    }
   };
 
-  const updateProductApi = async (id, payload, file, extraFiles, removeImageIds) => {
-    const fd = new FormData();
-    if (payload.name !== undefined) fd.append("name", String(payload.name));
-    if (payload.price !== undefined) fd.append("price", String(payload.price));
-    if (payload.discount_price !== undefined) fd.append("discount_price", String(payload.discount_price));
-    if (payload.discount_amount !== undefined) fd.append("discount_amount", String(payload.discount_amount));
-    if (payload.grams !== undefined) fd.append("grams", String(payload.grams));
-    if (payload.category !== undefined && payload.category !== null) fd.append("category", String(payload.category));
-    if (payload.description !== undefined) fd.append("description", String(payload.description));
-    if (payload.video_url !== undefined && String(payload.video_url).trim() !== "") fd.append("video_url", String(payload.video_url));
-    if (payload.sku !== undefined && String(payload.sku).trim() !== "") fd.append("sku", String(payload.sku));
-    // NOTE: intentionally not changing API signature to send variants/product_type
-    if (file) fd.append("image", file);
-    if (Array.isArray(extraFiles)) extraFiles.forEach((f) => fd.append("images[]", f));
-    if (Array.isArray(removeImageIds) && removeImageIds.length) fd.append("remove_image_ids", removeImageIds.join(","));
-    const res = await api.post(`${basePath}/update/${id}`, fd, { headers: { "Content-Type": "multipart/form-data" } });
-    return res.data ?? res;
-  };
-
-  const deleteProductApi = async (id) => {
-    const res = await api.delete(`${basePath}/delete/${id}`);
-    return res.data ?? res;
-  };
-
-  // lifecycle
+  /* -------------------- lifecycle: initial fetches -------------------- */
   useEffect(() => {
     void fetchProducts();
     void fetchCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // helper: generate dummy variants depending on type
-  const dummyVariantsForType = (type) => {
-    if (!type) return [];
-    if (type === "9Nutz Sweet") {
-      // weight variants
-      return [
-        { id: `v-${Date.now()}-1`, label: "100g", price: "120", stock: 50 },
-        { id: `v-${Date.now()}-2`, label: "250g", price: "280", stock: 30 },
-      ];
+  useEffect(() => {
+    if (typeof fetchAttributes === "function") {
+      void fetchAttributesRaw();
+    } else {
+      // if the context already exposes attributes array synchronously, copy it below
+      const maybeAttrs = variantCtx?.attributes ?? variantCtx?.attributesRaw ?? variantCtx?.shopAttributes ?? [];
+      if (Array.isArray(maybeAttrs) && maybeAttrs.length) {
+        setAttributesRaw(maybeAttrs);
+      }
     }
-    if (type === "Clothing") {
-      // clothing variants with colors & price
-      return [
-        { id: `v-${Date.now()}-1`, color: "Red", size: "M", price: "799", stock: 20 },
-        { id: `v-${Date.now()}-2`, color: "Blue", size: "L", price: "799", stock: 12 },
-      ];
-    }
-    if (type === "Gold") {
-      // gold grams variants
-      return [
-        { id: `v-${Date.now()}-1`, grams: "1g", price: "5000", purity: "24K" },
-        { id: `v-${Date.now()}-2`, grams: "5g", price: "24000", purity: "24K" },
-      ];
-    }
-    return [];
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* -------------------- sync shopAttributes local state from attributesRaw / variantCtx -------------------- */
+  useEffect(() => {
+    const src = Array.isArray(attributesRaw) && attributesRaw.length
+      ? attributesRaw
+      : (Array.isArray(variantCtx?.attributes) ? variantCtx.attributes :
+        (Array.isArray(variantCtx?.attributesRaw) ? variantCtx.attributesRaw :
+          (Array.isArray(variantCtx?.shopAttributes) ? variantCtx.shopAttributes :
+            (Array.isArray(variantCtx?.shopsettings) ? variantCtx.shopsettings : []))));
+    const normalized = Array.isArray(src) && src.length
+      ? src.map((a) => {
+          const id = a.id ?? a.ID ?? a.attribute_id ?? a.attributeId ?? a.key ?? a.name ?? null;
+          const name = a.attribute_name ?? a.name ?? a.label ?? a.value ?? "";
+          return { id: id ?? makeLocalId(), name: String(name), raw: a, active: false };
+        })
+      : [];
+    setShopAttributes(normalized);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attributesRaw, variantCtx]);
+
+  /* -------------------- UI handlers & helpers -------------------- */
 
   // open add drawer
   const openAddDrawer = () => {
@@ -1440,6 +1691,8 @@ export default function TestProducts() {
     setErrors({});
     setIsEditMode(false);
     setEditingId(null);
+    // reset attribute selections to inactive by default
+    setShopAttributes((prev) => prev.map((a) => ({ ...a, active: false })));
     setIsDrawerOpen(true);
     setTimeout(() => firstInputRef.current?.focus(), 100);
   };
@@ -1455,22 +1708,16 @@ export default function TestProducts() {
       discount_amount: safeTrim(p.discount_amount) ?? String(p.discount_amount ?? ""),
       discount_price: safeTrim(p.discount_price) ?? String(p.discount_price ?? ""),
       sku: safeTrim(p.sku ?? "") ?? "",
-      image: (p.image_url ?? p.image ?? ""),
+      image: p.image_url ?? p.image ?? "",
       description: safeTrim(p.description ?? "") ?? "",
       video_url: safeTrim(p.video_url ?? "") ?? "",
-      product_type: p.product_type ?? "",
     });
 
-    // If product has variants (from server), populate them; otherwise use dummy depending on category/type
     const incomingVariants = p.variants ?? p.options ?? p.product_variants ?? p.formVariants ?? null;
     if (incomingVariants && Array.isArray(incomingVariants) && incomingVariants.length) {
-      setFormVariants(
-        incomingVariants.map((v, idx) => ({ id: v.id ?? v._id ?? `v-${Date.now()}-${idx}`, ...v }))
-      );
+      setFormVariants(incomingVariants.map((v, idx) => ({ id: v.id ?? v._id ?? `v-${Date.now()}-${idx}`, ...v })));
     } else {
-      // load dummy variants if product_type known
-      const type = p.product_type ?? "";
-      setFormVariants(dummyVariantsForType(type));
+      setFormVariants([]); // do not create dummy variants (UI removed)
     }
 
     setImageFile(null);
@@ -1495,6 +1742,22 @@ export default function TestProducts() {
     setRemovedExistingImageIds([]);
     setNewExtraFiles([]);
     setNewExtraPreviews([]);
+
+    // Populate shop attribute active state according to product's existing shop attributes (if any)
+    const productAttrs = p.shop_attributes ?? p.shopAttributes ?? p.selected_shop_attributes ?? [];
+    if (Array.isArray(productAttrs) && productAttrs.length) {
+      const idsSet = new Set(
+        productAttrs.map((x) => {
+          if (x == null) return null;
+          if (typeof x === "object") return x.id ?? x.attribute_id ?? x.ID ?? x.key ?? x.name ?? null;
+          return x;
+        })
+      );
+      setShopAttributes((prev) => prev.map((a) => ({ ...a, active: idsSet.has(a.id) })));
+    } else {
+      setShopAttributes((prev) => prev.map((a) => ({ ...a, active: false })));
+    }
+
     setIsDrawerOpen(true);
     setTimeout(() => firstInputRef.current?.focus(), 120);
   };
@@ -1516,6 +1779,7 @@ export default function TestProducts() {
     setRemovedExistingImageIds([]);
     setNewExtraFiles([]);
     setNewExtraPreviews([]);
+    setShopAttributes((prev) => prev.map((a) => ({ ...a, active: false })));
   };
 
   const validateForm = () => {
@@ -1593,39 +1857,7 @@ export default function TestProducts() {
     setExistingExtraImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // variant helpers
-  const onProductTypeChange = (type) => {
-    setForm((f) => ({ ...f, product_type: type }));
-    // set dummy variants for selected type
-    setFormVariants(dummyVariantsForType(type));
-  };
-
-  const addVariantRow = () => {
-    const type = form.product_type;
-    if (!type) {
-      toast.error("Please select product type first");
-      return;
-    }
-    if (type === "9Nutz Sweet") {
-      setFormVariants((prev) => [...prev, { id: `v-${Date.now()}`, label: "New weight", price: "", stock: 0 }]);
-    } else if (type === "Clothing") {
-      setFormVariants((prev) => [...prev, { id: `v-${Date.now()}`, color: "", size: "", price: "", stock: 0 }]);
-    } else if (type === "Gold") {
-      setFormVariants((prev) => [...prev, { id: `v-${Date.now()}`, grams: "", price: "", purity: "24K" }]);
-    } else {
-      setFormVariants((prev) => [...prev, { id: `v-${Date.now()}`, label: "Variant", price: "" }]);
-    }
-  };
-
-  const removeVariantRow = (index) => {
-    setFormVariants((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const updateVariantField = (index, field, value) => {
-    setFormVariants((prev) => prev.map((v, i) => (i === index ? { ...v, [field]: value } : v)));
-  };
-
-  // ---------- submit (create/update) without changing API calls
+  /* -------------------- submit (create/update) -------------------- */
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setErrors((prev) => ({ ...prev, image: undefined }));
@@ -1651,6 +1883,10 @@ export default function TestProducts() {
       categoryToSend = !Number.isNaN(asNum) && /^\d+$/.test(trimmed) ? asNum : trimmed;
     }
 
+    const selectedShopAttrs = shopAttributes
+      .filter((a) => a.active)
+      .map((a) => ({ id: a.id, name: a.name }));
+
     const payload = {
       name: nameTrimmed,
       price: priceTrimmed,
@@ -1661,7 +1897,6 @@ export default function TestProducts() {
       ...(descriptionTrimmed ? { description: descriptionTrimmed } : {}),
       ...(videoUrlTrimmed ? { video_url: videoUrlTrimmed } : {}),
       ...(skuTrimmed ? { sku: skuTrimmed } : {}),
-      // NOTE: we intentionally do NOT attach variants/product_type to API payload (preserve API calls)
     };
 
     setIsSubmitting(true);
@@ -1669,10 +1904,10 @@ export default function TestProducts() {
 
     if (isEditMode && editingId != null) {
       const prev = products;
-      const updatedLocal = normalizeProduct({ ...payload, id: editingId, product_type: form.product_type, formVariants });
+      const updatedLocal = normalizeProduct({ ...payload, id: editingId, formVariants });
       setProducts((cur) => cur.map((p) => (String(p.id) === String(editingId) ? { ...p, ...updatedLocal } : p)));
       try {
-        const res = await updateProductApi(editingId, payload, imageFile, newExtraFiles, removedExistingImageIds);
+        const res = await updateProductApi(editingId, payload, imageFile, newExtraFiles, removedExistingImageIds, selectedShopAttrs);
         const body = res.data ?? res;
         if (body && body.status === false) {
           const msg = body.message ?? "Update failed";
@@ -1683,9 +1918,7 @@ export default function TestProducts() {
         }
         const updatedRaw = body?.data ?? body?.product ?? body;
         const updated = normalizeProduct(updatedRaw);
-        // include local variants in display if server returns nothing
         if (!updated.variants && formVariants.length) updated.variants = formVariants;
-        if (!updated.product_type && form.product_type) updated.product_type = form.product_type;
         setProducts((cur) => {
           const without = cur.filter((x) => String(x.id) !== String(updated.id));
           return [updated, ...without];
@@ -1729,12 +1962,12 @@ export default function TestProducts() {
         images: newExtraPreviews,
         video_url: payload.video_url ?? undefined,
         sku: payload.sku ?? undefined,
-        product_type: form.product_type ?? undefined,
-        formVariants, // local only for immediate preview
+        formVariants,
+        shop_attributes: selectedShopAttrs,
       });
       setProducts((prev) => [tempProd, ...prev]);
       try {
-        const res = await createProductApi(payload, imageFile, newExtraFiles);
+        const res = await createProductApi(payload, imageFile, newExtraFiles, selectedShopAttrs);
         const body = res.data ?? res;
         if (body && body.status === false) {
           const msg = body.message ?? "Add failed";
@@ -1745,9 +1978,8 @@ export default function TestProducts() {
         }
         const createdRaw = body?.data ?? body?.product ?? body;
         const created = normalizeProduct(createdRaw);
-        // if server doesn't return variants but we have local variants, keep them in UI
         if (!created.variants && formVariants.length) created.variants = formVariants;
-        if (!created.product_type && form.product_type) created.product_type = form.product_type;
+        if (!created.shop_attributes && selectedShopAttrs.length) created.shop_attributes = selectedShopAttrs;
         setProducts((cur) => {
           const withoutTemp = cur.filter((p) => String(p.id) !== String(tempId));
           return [created, ...withoutTemp];
@@ -1778,8 +2010,6 @@ export default function TestProducts() {
         }
       } finally {
         setIsSubmitting(false);
-        setImageFile(null);
-        setNewExtraFiles([]);
         setImageFile(null);
         setNewExtraFiles([]);
         setNewExtraPreviews([]);
@@ -1832,7 +2062,7 @@ export default function TestProducts() {
     return () => window.removeEventListener("keydown", onKey);
   }, [isDrawerOpen, isViewOpen, isCatDrawerOpen]);
 
-  // Category handlers (kept intact)
+  // Category handlers
   const openCatDrawer = () => {
     setCatForm({ name: "", imagePreview: "" });
     setCatEditingId(null);
@@ -1917,14 +2147,11 @@ export default function TestProducts() {
     }
   };
 
-  /* --------------------
-     NEW: client-side search + pagination UI wiring
-     -------------------- */
+  /* -------------------- client-side search + pagination UI wiring -------------------- */
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // filter by name (case-insensitive)
   const filteredProducts = products.filter((p) => {
     const q = String(searchTerm || "").trim().toLowerCase();
     if (!q) return true;
@@ -1938,8 +2165,11 @@ export default function TestProducts() {
 
   const paginatedProducts = filteredProducts.slice((page - 1) * pageSize, page * pageSize);
 
-  /* -------------------- end new UI logic -------------------- */
+  const toggleShopAttr = (id) => {
+    setShopAttributes((prev) => prev.map((a) => (a.id === id ? { ...a, active: !a.active } : a)));
+  };
 
+  /* -------------------- render -------------------- */
   return (
     <>
       <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
@@ -1951,7 +2181,6 @@ export default function TestProducts() {
               <RefreshCw className="h-4 w-4" />
             </Button>
 
-            {/* new: search input beside refresh */}
             <div className="ml-2">
               <input
                 type="text"
@@ -1967,6 +2196,7 @@ export default function TestProducts() {
             <Button onClick={() => openAddDrawer()} className="ml-2"><Plus className="h-4 w-4 mr-2" /> Add Product</Button>
           </div>
         </div>
+
         <Card className="shadow-sm w-full">
           <div className="w-full overflow-x-auto">
             <table className="w-full min-w-[700px] md:min-w-full divide-y divide-slate-200">
@@ -2000,7 +2230,6 @@ export default function TestProducts() {
                       <td className="px-4 py-3 align-middle">
                         <div className="text-sm font-medium truncate max-w-[220px] sm:max-w-none">{p.name}</div>
                         <div className="text-xs text-slate-400 mt-1">{p.slug ?? ""}</div>
-                        {p.product_type && <div className="text-xs mt-1 inline-block px-2 py-1 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">{p.product_type}</div>}
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-600 align-middle hidden sm:table-cell">{p.category && typeof p.category === "object" ? p.category.name ?? "-" : p.category ?? "-"}</td>
                       <td className="px-4 py-3 text-sm align-middle hidden md:table-cell">{p.grams ?? "-"}</td>
@@ -2022,7 +2251,7 @@ export default function TestProducts() {
           </div>
         </Card>
 
-        {/* Tailwind pagination UI (client-side) */}
+        {/* Pagination UI */}
         <div className="mt-4 flex items-center justify-between gap-3">
           <div className="text-sm text-slate-600">
             Showing <strong>{filteredProducts.length === 0 ? 0 : (page - 1) * pageSize + 1}</strong> -{" "}
@@ -2045,7 +2274,6 @@ export default function TestProducts() {
                 Prev
               </button>
 
-              {/* page numbers (show up to 7, centered around current page) */}
               <div className="inline-flex items-center space-x-1">
                 {(() => {
                   const pages = [];
@@ -2079,6 +2307,7 @@ export default function TestProducts() {
           </div>
         </div>
 
+        {/* Drawer: Add / Edit */}
         {isDrawerOpen && (
           <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsDrawerOpen(false); resetForm(); }} aria-hidden="true" />
@@ -2113,18 +2342,6 @@ export default function TestProducts() {
                       {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
                     </div>
 
-                    {/* Product Type dropdown */}
-                    <div className="w-[30%] min-w-[220px]">
-                      <label className="block text-sm font-medium mb-1">Store Type</label>
-                      <select value={form.product_type} onChange={(e) => onProductTypeChange(e.target.value)} className="block w-full border rounded-md p-2">
-                        <option value="">-- Select type --</option>
-                        <option value="9Nutz Sweet">9Nutz Sweet</option>
-                        <option value="Clothing">Clothing</option>
-                        <option value="Gold">Gold</option>
-                      </select>
-                      <p className="text-xs text-slate-400 mt-1">Variants change based on this type.</p>
-                    </div>
-
                     <div className="w-[30%] min-w-[220px]">
                       <label className="block text-sm font-medium mb-1">Discount Price</label>
                       <input value={form.discount_price} onChange={(e) => setForm((f) => ({ ...f, discount_price: e.target.value }))} className="block w-full border rounded-md p-2" placeholder="800.00" />
@@ -2136,28 +2353,25 @@ export default function TestProducts() {
                     </div>
 
                     <div className="w-full">
-  <label className="block text-sm font-medium mb-1">
-    Description <span className="text-red-500">*</span>
-  </label>
+                      <label className="block text-sm font-medium mb-1">Description <span className="text-red-500">*</span></label>
+                      <textarea
+                        ref={descInputRef}
+                        value={form.description}
+                        onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                        onFocus={() => setIsEditorOpen(true)}
+                        placeholder="Click to edit description (rich text)"
+                        readOnly
+                        rows={4}
+                        className={`block w-full border rounded-md p-2 focus:outline-none resize-none ${errors.description ? "border-red-400" : "border-slate-200"}`}
+                      />
+                      {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
+                    </div>
 
-  <textarea
-    ref={descInputRef}
-    value={form.description}
-    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-    onFocus={() => setIsEditorOpen(true)}
-    placeholder="Click to edit description (rich text)"
-    readOnly
-    rows={4}
-    className={`block w-full border rounded-md p-2 focus:outline-none resize-none ${errors.description ? "border-red-400" : "border-slate-200"}`}
-  />
-
-  {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
-</div>
-                     
                     <div className="w-[30%] min-w-[220px]">
                       <label className="block text-sm font-medium mb-1">Video URL</label>
                       <input value={form.video_url} onChange={(e) => setForm((f) => ({ ...f, video_url: e.target.value }))} className="block w-full border rounded-md p-2" placeholder="https://www.youtube.com/watch?v=" />
                     </div>
+
                     <div className="w-[30%] min-w-[220px]">
                       <label className="block text-sm font-medium mb-1">Upload Image</label>
                       <input type="file" accept="image/*" onChange={handleImageChange} className="block w-full text-sm" />
@@ -2168,207 +2382,145 @@ export default function TestProducts() {
                       <label className="block text-sm font-medium mb-1">Additional images</label>
                       <input type="file" accept="image/*" multiple onChange={handleAdditionalImagesChange} className="block w-full text-sm" />
                     </div>
-                    {/* NEW: show main uploaded image preview below video URL input */}
+
+                    {/* main image preview + variants (readonly) */}
                     <div className="w-full mt-2">
                       {(form.image || imageFile) && (
-                        <div style={{display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: '8px'}}>
+                        <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-end", gap: "8px" }}>
                           <div className="w-full lg:w-1/2 flex flex-col">
-    <div className="mt-1 flex-1">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-semibold">Variants</h4>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={addVariantRow}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded border hover:bg-slate-50"
-          >
-            <Plus className="w-4 h-4" /> Add Variant
-          </button>
-        </div>
-      </div>
+                            <div className="mt-1 flex-1">
+                              <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-sm font-semibold">Variants (readonly)</h4>
+                                <div className="flex items-center gap-2" />
+                              </div>
 
-      <div className="space-y-2">
-  {form.product_type ? (
-    formVariants.length === 0 ? (
-      <div className="text-sm text-slate-500">
-        No variants yet. Click "Add Variant" to create one.
-      </div>
-    ) : (
-      formVariants.map((v, idx) => (
-        <div
-          key={v.id ?? idx}
-          className="p-2 border rounded-md bg-gray-50 flex items-center gap-2 flex-nowrap overflow-x-auto"
-        >
-          {/* 9Nutz Sweet -> weight + price + stock */}
-          {form.product_type === "9Nutz Sweet" && (
-            <>
-              <input
-                placeholder="Weight"
-                value={v.label ?? ""}
-                onChange={(e) => updateVariantField(idx, "label", e.target.value)}
-                className="block border rounded-md p-1.5 text-xs min-w-[100px] flex-shrink-0"
-              />
-              <input
-                placeholder="Price"
-                value={v.price ?? ""}
-                onChange={(e) => updateVariantField(idx, "price", e.target.value)}
-                className="block border rounded-md p-1.5 text-xs w-[80px] flex-shrink-0 text-right"
-              />
-              <input
-                type="number"
-                placeholder="Stock"
-                value={v.stock ?? 0}
-                onChange={(e) => updateVariantField(idx, "stock", Number(e.target.value))}
-                className="block border rounded-md p-1.5 text-xs w-[70px] flex-shrink-0"
-              />
-            </>
-          )}
+                              <div className="space-y-2">
+                                {formVariants.length === 0 ? (
+                                  <div className="text-sm text-slate-500">No variants for this product.</div>
+                                ) : (
+                                  formVariants.map((v, idx) => (
+                                    <div key={v.id ?? idx} className="p-2 border rounded-md bg-gray-50 flex items-center gap-2">
+                                      <div className="flex flex-col">
+                                        <div className="text-sm">
+                                          {v.label ? `${v.label} — ₹ ${v.price ?? "-"}` : null}
+                                          {v.color ? `${v.color} ${v.size ? `(${v.size})` : ""} — ₹ ${v.price ?? "-"}` : null}
+                                          {v.grams ? `${v.grams} — ₹ ${v.price ?? "-"}` : null}
+                                          {!v.label && !v.color && !v.grams && <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(v)}</pre>}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          </div>
 
-          {/* Clothing -> color, size, price, stock */}
-          {form.product_type === "Clothing" && (
-            <>
-              <input
-                placeholder="Color"
-                value={v.color ?? ""}
-                onChange={(e) => updateVariantField(idx, "color", e.target.value)}
-                className="block border rounded-md p-1.5 text-xs min-w-[90px] flex-shrink-0"
-              />
-              <input
-                placeholder="Size"
-                value={v.size ?? ""}
-                onChange={(e) => updateVariantField(idx, "size", e.target.value)}
-                className="block border rounded-md p-1.5 text-xs w-[70px] flex-shrink-0"
-              />
-              <input
-                placeholder="Price"
-                value={v.price ?? ""}
-                onChange={(e) => updateVariantField(idx, "price", e.target.value)}
-                className="block border rounded-md p-1.5 text-xs w-[80px] flex-shrink-0 text-right"
-              />
-              <input
-                type="number"
-                placeholder="Stock"
-                value={v.stock ?? 0}
-                onChange={(e) => updateVariantField(idx, "stock", Number(e.target.value))}
-                className="block border rounded-md p-1.5 text-xs w-[70px] flex-shrink-0"
-              />
-            </>
-          )}
-
-          {/* Gold -> grams + price + purity */}
-          {form.product_type === "Gold" && (
-            <>
-              <input
-                placeholder="Grams"
-                value={v.grams ?? ""}
-                onChange={(e) => updateVariantField(idx, "grams", e.target.value)}
-                className="block border rounded-md p-1.5 text-xs min-w-[90px] flex-shrink-0"
-              />
-              <input
-                placeholder="Price"
-                value={v.price ?? ""}
-                onChange={(e) => updateVariantField(idx, "price", e.target.value)}
-                className="block border rounded-md p-1.5 text-xs w-[80px] flex-shrink-0 text-right"
-              />
-              <select
-                value={v.purity ?? "24K"}
-                onChange={(e) => updateVariantField(idx, "purity", e.target.value)}
-                className="block border rounded-md p-1.5 text-xs w-[80px] flex-shrink-0"
-              >
-                <option value="24K">24K</option>
-                <option value="22K">22K</option>
-              </select>
-            </>
-          )}
-
-          {/* Remove Button */}
-          <div className="ml-auto flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => removeVariantRow(idx)}
-              className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded border text-xs hover:bg-red-50 text-red-600"
-              title="Remove variant"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-      ))
-    )
-  ) : (
-    <div className="text-sm text-slate-500">
-      Choose a product type to configure variants.
-    </div>
-  )}
-</div>
-    </div>
-  </div>
-
-                          {/* <div className="text-sm text-slate-600 mb-2">Main image preview</div> */}
-                           <div className="w-24 h-24 rounded-md overflow-hidden border">
-  <img
-    src={String(form.image)}
-    alt="main-preview"
-    className="w-full h-full object-cover"
-    onError={(e) => {
-      e.currentTarget.onerror = null;
-      e.currentTarget.src = IMAGES.DummyImage;
-    }}
-  />
-</div>
-
+                          <div className="w-24 h-24 rounded-md overflow-hidden border">
+                            <img
+                              src={String(form.image)}
+                              alt="main-preview"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = IMAGES.DummyImage;
+                              }}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
-                      
-<div
-  className="w-full flex flex-col lg:flex-row items-stretch gap-6 mt-4"
->
-  <div className="w-full lg:w-1/2 flex flex-col">
-    <div className="border rounded-md p-3 bg-gray-50 flex-1">
-      <div>
-        <div className="text-xs text-slate-600 mb-1">Additional images Preview</div>
-        <div className="grid grid-cols-3 gap-2">
-          {existingExtraImages.map((img, idx) => (
-            <div key={String(img.id ?? img.url)} className="relative w-full h-20 rounded-md overflow-hidden border">
-              <img
-                src={/^https?:\/\//.test(img.url) ? img.url : img.url}
-                alt={`extra-${idx}`}
-                className="w-full h-full object-cover"
-                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = IMAGES.DummyImage; }}
-              />
-              <button
-                type="button"
-                onClick={() => removeExistingExtraByIndex(idx)}
-                className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white"
-                title="Remove"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-          {newExtraPreviews.map((p, idx) => (
-            <div key={idx} className="relative w-full h-20 rounded-md overflow-hidden border">
-              <img src={p} alt={`new-extra-${idx}`} className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => removeNewExtraAt(idx)}
-                className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white"
-                title="Remove"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-          {existingExtraImages.length === 0 && newExtraPreviews.length === 0 && (
-            <div className="col-span-3 text-xs text-slate-400">No additional images</div>
-          )}
-        </div>
-      </div>
+
+                    {/* Shop Attributes UI (from VariantContext) */}
+                    <div className="w-full">
+                      <div className="border rounded-md p-3 bg-gray-50">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <div className="text-sm font-medium"> Variants</div>
+                            {/* <div className="text-xs text-slate-500">Toggle attributes to include with the product payload</div> */}
+                          </div>
+                        </div>
+
+                          <div className="grid grid-cols-3 gap-1">
+  {shopAttributes.length === 0 ? (
+    <div className="text-sm text-slate-500 col-span-3">
+      No shop attributes available in VariantContext.
     </div>
-  </div>
+  ) : (
+    shopAttributes.map((a) => (
+      <label
+        key={String(a.id)}
+        className="flex items-center gap-2 p-2 rounded border bg-white"
+      >
+        <input
+          type="checkbox"
+          checked={!!a.active}
+          onChange={() => toggleShopAttr(a.id)}
+          className="h-4 w-4"
+        />
+        <div className="flex-1 text-sm">{a.name}</div>
+        <div
+          className={`text-xs px-2 py-1 rounded ${
+            a.active
+              ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+              : "bg-slate-50 text-slate-500 border border-slate-100"
+          }`}
+        >
+          {a.active ? "Active" : "Inactive"}
+        </div>
+      </label>
+    ))
+  )}
 </div>
 
+                      </div>
+                    </div>
+
+                    {/* Additional images preview */}
+                    <div className="w-full flex flex-col lg:flex-row items-stretch gap-6 mt-4">
+                      <div className="w-full lg:w-1/2 flex flex-col">
+                        <div className="border rounded-md p-3 bg-gray-50 flex-1">
+                          <div>
+                            <div className="text-xs text-slate-600 mb-1">Additional images Preview</div>
+                            <div className="grid grid-cols-3 gap-2">
+                              {existingExtraImages.map((img, idx) => (
+                                <div key={String(img.id ?? img.url)} className="relative w-full h-20 rounded-md overflow-hidden border">
+                                  <img
+                                    src={/^https?:\/\//.test(img.url) ? img.url : img.url}
+                                    alt={`extra-${idx}`}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = IMAGES.DummyImage; }}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeExistingExtraByIndex(idx)}
+                                    className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white"
+                                    title="Remove"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ))}
+                              {newExtraPreviews.map((p, idx) => (
+                                <div key={idx} className="relative w-full h-20 rounded-md overflow-hidden border">
+                                  <img src={p} alt={`new-extra-${idx}`} className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeNewExtraAt(idx)}
+                                    className="absolute top-1 right-1 p-1 rounded-full bg-white/80 hover:bg-white"
+                                    title="Remove"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ))}
+                              {existingExtraImages.length === 0 && newExtraPreviews.length === 0 && (
+                                <div className="col-span-3 text-xs text-slate-400">No additional images</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
                   </div>
 
@@ -2382,6 +2534,7 @@ export default function TestProducts() {
           </div>
         )}
 
+        {/* Category Drawer */}
         {isCatDrawerOpen && (
           <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Category management">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setIsCatDrawerOpen(false); setCatEditingId(null); setCatForm({ name: "", imagePreview: "" }); setCatFile(null); if (catFileRef.current) catFileRef.current.value = ""; }} aria-hidden="true" />
@@ -2431,6 +2584,7 @@ export default function TestProducts() {
           </div>
         )}
 
+        {/* Product View Drawer */}
         {isViewOpen && selectedProduct && (
           <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsViewOpen(false)} />
@@ -2447,8 +2601,6 @@ export default function TestProducts() {
                   <div><div className="text-sm font-medium text-slate-500">Grams</div><div className="mt-1 rounded-md border p-2 bg-gray-50">{selectedProduct.grams ?? "-"}</div></div>
                   <div><div className="text-sm font-medium text-slate-500">Category</div><div className="mt-1 rounded-md border p-2 bg-gray-50">{selectedProduct.category && typeof selectedProduct.category === "object" ? (selectedProduct.category.name ?? selectedProduct.category.id) : (selectedProduct.category ?? "-")}</div></div>
 
-                  {selectedProduct.product_type && (<div><div className="text-sm font-medium text-slate-500">Type</div><div className="mt-1 rounded-md border p-2 bg-gray-50">{selectedProduct.product_type}</div></div>)}
-
                   {selectedProduct.variants && Array.isArray(selectedProduct.variants) && (
                     <div>
                       <div className="text-sm font-medium text-slate-500">Variants</div>
@@ -2456,12 +2608,23 @@ export default function TestProducts() {
                         {selectedProduct.variants.map((v, idx) => (
                           <div key={v.id ?? idx} className="rounded-md border p-2 bg-white">
                             <div className="text-sm text-slate-700">
-                              {selectedProduct.product_type === "9Nutz Sweet" && `${v.label ?? "-"} — ₹ ${v.price ?? "-"}` }
-                              {selectedProduct.product_type === "Clothing" && `${v.color ?? "-"} ${v.size ? `(${v.size})` : ""} — ₹ ${v.price ?? "-"}` }
-                              {selectedProduct.product_type === "Gold" && `${v.grams ?? "-"} — ₹ ${v.price ?? "-"} (${v.purity ?? "-"})` }
-                              {!selectedProduct.product_type && JSON.stringify(v)}
+                              {v.label && `${v.label} — ₹ ${v.price ?? "-"}`}
+                              {v.color && `${v.color} ${v.size ? `(${v.size})` : ""} — ₹ ${v.price ?? "-"}`}
+                              {v.grams && `${v.grams} — ₹ ${v.price ?? "-"} ${v.purity ? `(${v.purity})` : ""}`}
+                              {!v.label && !v.color && !v.grams && JSON.stringify(v)}
                             </div>
                           </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedProduct.shop_attributes && Array.isArray(selectedProduct.shop_attributes) && (
+                    <div>
+                      <div className="text-sm font-medium text-slate-500">Shop attributes</div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedProduct.shop_attributes.map((sa, i) => (
+                          <div key={String(sa.id ?? i)} className="text-xs px-2 py-1 rounded bg-slate-50 border text-slate-700">{sa.name ?? sa.attribute_name ?? String(sa)}</div>
                         ))}
                       </div>
                     </div>

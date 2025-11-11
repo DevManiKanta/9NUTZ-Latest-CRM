@@ -16,7 +16,7 @@
 // }
 
 // export default function VariantsEditor({ productId = null, initialVariants = {}, onChange = null }) {
-//   // NOTE: removed any static/dummy entries as requested.
+//   // normalize incoming attributes (if provided)
 //   const normalizeIncoming = (arr) =>
 //     Array.isArray(arr)
 //       ? arr.map((it) => ({
@@ -30,7 +30,6 @@
 //         }))
 //       : [];
 
-//   // Start empty (no static data). If initialVariants provided, normalize them.
 //   const [weights, setWeights] = useState(normalizeIncoming(initialVariants.weight));
 //   const [sizes, setSizes] = useState(normalizeIncoming(initialVariants.size));
 //   const [colors, setColors] = useState(normalizeIncoming(initialVariants.color));
@@ -39,7 +38,6 @@
 //   const [errors, setErrors] = useState({});
 //   const [isSaving, setIsSaving] = useState(false);
 
-//   // Store type kept (unchanged)
 //   const STORE_OPTIONS = [
 //     { value: "9Nutz", label: "9Nutz Sweet" },
 //     { value: "Fashion", label: "Fashion" },
@@ -50,24 +48,21 @@
 //   const DEFAULT_MATERIAL_CHIPS = ["Cotton", "Leather", "Metal", "Silk"];
 //   const snapshotRef = useRef({});
 
-//   // server-side variations
+//   // server-side variations & attributes
 //   const [variationsList, setVariationsList] = useState([]);
 //   const [variationsLoading, setVariationsLoading] = useState(false);
 //   const [variationsError, setVariationsError] = useState(null);
 //   const [selectedVariation, setSelectedVariation] = useState(null);
 
-//   // attributes list (raw) - we will populate panels from this for the selected variation
-//   // but we also maintain panel-specific arrays (weights/sizes/colors/materials) for editing UI
 //   const [attributesRaw, setAttributesRaw] = useState([]);
 //   const [attrsLoading, setAttrsLoading] = useState(false);
 
-//   // variation modal (unchanged)
+//   // modal state for variation create/edit
 //   const [isVariationModalOpen, setIsVariationModalOpen] = useState(false);
 //   const [variationFormName, setVariationFormName] = useState("");
 //   const [variationEditingId, setVariationEditingId] = useState(null);
 //   const [variationSubmitting, setVariationSubmitting] = useState(false);
 
-//   // notify parent on change (keeps your original onChange behaviour)
 //   useEffect(() => {
 //     if (onChange) {
 //       const stripMeta = (arr) => arr.map((it) => ({ id: it.id, uid: it.uid, value: it.value, price: it.price, imagePreview: it.imagePreview }));
@@ -82,24 +77,20 @@
 //   }, [weights, sizes, colors, materials]);
 
 //   /* ------------------------------
-//      Helper: mapping variation name -> type(s)
-//      ------------------------------ */
+//      mapping helpers
+//   ------------------------------ */
 //   const mapVariationNameToType = (name = "") => {
 //     if (!name) return null;
 //     const s = String(name).trim().toLowerCase();
 //     if (!s) return null;
-
-//     // If server returns multiple names comma-separated, handle that:
 //     if (s.includes(",")) {
 //       const parts = s.split(",").map((p) => p.trim());
 //       return parts.map((p) => mapVariationNameToType(p)).flat().filter(Boolean);
 //     }
-
 //     if (s.includes("weight")) return "weight";
 //     if (s.includes("size")) return "size";
 //     if (s.includes("color")) return "color";
 //     if (s.includes("material")) return "material";
-//     // fallback: if unknown, return null so storeType mapping is used
 //     return null;
 //   };
 
@@ -108,7 +99,6 @@
 //       const mapped = mapVariationNameToType(selectedVariationArg?.name ?? selectedVariationArg?.value ?? "");
 //       if (mapped) return Array.isArray(mapped) ? mapped : [mapped];
 //     }
-//     // fallback (original behavior)
 //     switch (st) {
 //       case "9Nutz":
 //         return ["weight"];
@@ -122,8 +112,8 @@
 //   };
 
 //   /* ------------------------------
-//      Generic entry operations (unchanged behaviour)
-//      ------------------------------ */
+//      Basic panel operations (add/edit/delete local + server attribute persistence)
+//   ------------------------------ */
 //   const addEntry = (type, preset = "") => {
 //     const entry = { uid: makeUid("v"), id: null, value: preset, price: "", imageFile: null, imagePreview: "", editing: true };
 //     if (type === "weight") setWeights((p) => [...p, entry]);
@@ -135,9 +125,8 @@
 //   const removeEntry = async (type, uid) => {
 //     const arr = getArrayByType(type);
 //     const target = arr.find((it) => it.uid === uid);
-//     // if entry has server id -> delete via API
 //     if (target?.id) {
-//       // confirm deletion
+//       // server delete
 //       // eslint-disable-next-line no-restricted-globals
 //       if (!confirm("Delete attribute? This cannot be undone.")) return;
 //       try {
@@ -149,7 +138,6 @@
 //         return;
 //       }
 //     }
-//     // remove locally
 //     if (type === "weight") setWeights((p) => p.filter((it) => it.uid !== uid));
 //     if (type === "size") setSizes((p) => p.filter((it) => it.uid !== uid));
 //     if (type === "color") setColors((p) => p.filter((it) => it.uid !== uid));
@@ -172,12 +160,10 @@
 //     setEditingFlag(type, uid, true);
 //   };
 
-//   // saveEdit now also persists attribute to attributes API (add/update) when variation selected
 //   const saveEdit = async (type, uid) => {
 //     const arr = getArrayByType(type);
 //     const target = arr.find((x) => x.uid === uid);
 //     if (!target) return;
-
 //     if (!String(target.value).trim()) {
 //       toast.error("Value required");
 //       setErrors((e) => ({ ...e, [`value-${uid}`]: "Value required" }));
@@ -189,7 +175,7 @@
 //       return;
 //     }
 
-//     // If a server variation is selected, persist this attribute via Attributes API:
+//     // persist via attributes API when variation selected
 //     if (selectedVariation && selectedVariation.id) {
 //       try {
 //         const fd = new FormData();
@@ -199,22 +185,16 @@
 //         if (target.imageFile) fd.append("image", target.imageFile);
 
 //         if (!target.id) {
-//           // create attribute
 //           const res = await api.post("/admin/attributes/add", fd, {
 //             headers: { "Content-Type": "multipart/form-data" },
 //           });
-//           // server should return created attribute (id, image_url, etc.)
 //           const created = res?.data ?? res;
-//           // attempt to extract id and image url from response
 //           const newId = created?.id ?? created?.data?.id ?? null;
 //           const image_url = created?.image_url ?? created?.data?.image_url ?? created?.data?.image ?? null;
-
-//           // update local entry with id and image url
 //           updateField(type, uid, "id", newId);
 //           if (image_url) updateField(type, uid, "imagePreview", image_url);
 //           toast.success("Attribute created");
 //         } else {
-//           // update attribute
 //           await api.post(`/admin/attributes/update/${target.id}`, fd, {
 //             headers: { "Content-Type": "multipart/form-data" },
 //           });
@@ -229,7 +209,6 @@
 //       }
 //     }
 
-//     // finalize editing locally
 //     delete snapshotRef.current[uid];
 //     setEditingFlag(type, uid, false);
 //     setErrors((e) => {
@@ -251,7 +230,6 @@
 //       if (type === "material") setMaterials((p) => restore(p));
 //       delete snapshotRef.current[uid];
 //     } else {
-//       // newly added row with no snapshot -> remove on cancel
 //       if (type === "weight") setWeights((p) => p.filter((it) => it.uid !== uid));
 //       if (type === "size") setSizes((p) => p.filter((it) => it.uid !== uid));
 //       if (type === "color") setColors((p) => p.filter((it) => it.uid !== uid));
@@ -282,7 +260,6 @@
 //     if (type === "material") return materials;
 //     return [];
 //   };
-
 //   const handleImageChange = (type, uid, e) => {
 //     const file = e.target.files?.[0] ?? null;
 //     const clear = () => {
@@ -292,7 +269,6 @@
 //       if (type === "color") setColors((p) => c(p));
 //       if (type === "material") setMaterials((p) => c(p));
 //     };
-
 //     if (!file) {
 //       clear();
 //       return;
@@ -311,7 +287,6 @@
 //       } catch {}
 //       return;
 //     }
-
 //     const reader = new FileReader();
 //     reader.onload = () => {
 //       const preview = String(reader.result ?? "");
@@ -328,22 +303,12 @@
 //   };
 
 //   /* ------------------------------
-//      Attributes API integration
-//      ------------------------------ */
-
-//   // fetch attributes (all) and keep in attributesRaw; we will filter by variation_id when mapping to panels
+//      Attributes API integration: fetch & populate
+//   ------------------------------ */
 //   const fetchAttributes = async () => {
 //     setAttrsLoading(true);
 //     try {
-//       // prefer server filter if available; many APIs support query param like ?variation_id=...
-//       // Try using it (safe) — if server doesn't support, fallback to full list.
-//       let res;
-//       try {
-//         res = await api.get("/admin/attributes");
-//       } catch (err) {
-//         // If server supports query param, attempt with selectedVariation
-//         res = await api.get("/admin/attributes");
-//       }
+//       const res = await api.get("/admin/attributes");
 //       const data = res?.data ?? res;
 //       const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
 //       setAttributesRaw(list);
@@ -356,41 +321,20 @@
 //     }
 //   };
 
-//   // fetch a single attribute (useful after create/update to refresh metadata)
-//   const fetchAttributeById = async (id) => {
-//     if (!id) return null;
-//     try {
-//       const res = await api.get(`/admin/attributes/show/${id}`);
-//       const data = res?.data ?? res;
-//       return data;
-//     } catch (err) {
-//       console.error("fetchAttributeById error", err);
-//       return null;
-//     }
-//   };
-
-//   // map attributesRaw (filtered by selected variation) into the appropriate panels
 //   const populatePanelsFromAttributes = (variation) => {
 //     if (!variation || !variation.id) return;
 //     const vid = variation.id;
-//     // try to filter server-side if API returns variation_id field
 //     const list = (attributesRaw || []).filter((a) => {
-//       // attribute object shape may vary; check common fields
 //       const attrVid = a.variation_id ?? a.variationId ?? a.variation ?? a.variations_id ?? a.variationId;
 //       if (attrVid != null) return String(attrVid) === String(vid);
-//       // fallback: some APIs include variation nested: a.variation.id
 //       const nested = a.variation?.id ?? a.Variation?.id;
 //       if (nested != null) return String(nested) === String(vid);
-//       // if there's no variation field, we can't determine — ignore
 //       return false;
 //     });
 
-//     // map to panels based on variation name mapping (most UIs the variation name indicates which panel)
 //     const mappedType = mapVariationNameToType(variation.name ?? variation.value ?? "");
-//     const targetType = Array.isArray(mappedType) ? mappedType[0] : mappedType; // usually single
-
-//     // For safety, if mappedType missing, we attempt to use variation.name as panel type exact.
-//     // but the UI will show only the panel(s) visibleTypesForStore returns, so we still guard.
+//     const typesToPopulate = Array.isArray(mappedType) ? mappedType : mappedType ? [mappedType] : [];
+//     if (typesToPopulate.length === 0) return;
 
 //     const toEntry = (a) => ({
 //       uid: makeUid("v"),
@@ -402,12 +346,6 @@
 //       editing: false,
 //     });
 
-//     // Clear existing panels for the variation's type(s) and populate with fetched attributes
-//     const typesToPopulate = Array.isArray(mappedType) ? mappedType : mappedType ? [mappedType] : [];
-
-//     // If no mapping found, don't populate automatically — keep panels as-is (let user pick)
-//     if (typesToPopulate.length === 0) return;
-
 //     typesToPopulate.forEach((t) => {
 //       const items = list.map(toEntry);
 //       if (t === "weight") setWeights(items);
@@ -417,7 +355,9 @@
 //     });
 //   };
 
-//   // initial fetch variations & attributes
+//   /* ------------------------------
+//      fetch variations (server) and attributes on mount
+//   ------------------------------ */
 //   const fetchVariationsList = async () => {
 //     setVariationsLoading(true);
 //     setVariationsError(null);
@@ -436,52 +376,44 @@
 //   };
 
 //   useEffect(() => {
-//     // load variations + attributes once
 //     fetchVariationsList();
 //     fetchAttributes();
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
 //   }, []);
 
-//   // Whenever attributesRaw changes and a variation is selected, repopulate panels
 //   useEffect(() => {
 //     if (selectedVariation) populatePanelsFromAttributes(selectedVariation);
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
 //   }, [attributesRaw, selectedVariation]);
 
-//   // Called when user picks a variation from dropdown
 //   const onVariationSelectChange = async (val) => {
 //     if (!val) {
 //       setSelectedVariation(null);
-//       // clear panels if you want, or keep them — I keep them but you can clear if desired
 //       return;
 //     }
 //     const found = variationsList.find((v) => String(v.id ?? v.ID ?? v.value) === String(val));
 //     setSelectedVariation(found ?? null);
 
-//     // after selecting variation, attempt to fetch attributes filtered by variation id:
 //     try {
+//       // try filtered fetch (if API supports query param)
 //       let res;
-//       // attempt query param approach (if supported by API)
 //       try {
 //         res = await api.get(`/admin/attributes?variation_id=${String(found.id ?? found.ID ?? found.value)}`);
 //       } catch {
-//         // fallback to full list (we already fetched attributesRaw earlier)
 //         res = await api.get(`/admin/attributes`);
 //       }
 //       const data = res?.data ?? res;
 //       const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
 //       setAttributesRaw(list);
-//       // populatePanelsFromAttributes will be called via useEffect when attributesRaw updates
 //     } catch (err) {
 //       console.error("onVariationSelectChange fetch attributes error", err);
-//       // fallback: populate from existing attributesRaw
 //       populatePanelsFromAttributes(found);
 //     }
 //   };
 
 //   /* ------------------------------
-//      Build JSON / collect variant images (keeps your existing variant API behaviour)
-//      ------------------------------ */
+//      Variant JSON building + save (unchanged)
+//   ------------------------------ */
 //   const buildVariantsJson = () => ({
 //     weight: weights.map((w) => ({ uid: w.uid, id: w.id, value: w.value, price: w.price })),
 //     size: sizes.map((s) => ({ uid: s.uid, id: s.id, value: s.value, price: s.price })),
@@ -509,6 +441,7 @@
 //     collect(materials);
 //     return files;
 //   };
+
 //   const validate = () => {
 //     const err = {};
 //     const visible = visibleTypesForStore(storeType, selectedVariation);
@@ -526,6 +459,7 @@
 //     setErrors(err);
 //     return Object.keys(err).length === 0;
 //   };
+
 //   const saveVariants = async () => {
 //     if (!validate()) {
 //       toast.error("Fix variant errors");
@@ -535,21 +469,16 @@
 //     try {
 //       const variantsJson = buildVariantsJson();
 //       const variantFiles = collectVariantFiles();
-
-//       console.log("Saving variants — productId:", productId ?? "(none)");
-//       console.log("variantsJson:", JSON.stringify(variantsJson, null, 2));
-//       console.log("variantFiles:", variantFiles.map((f) => ({ name: f.name, size: f.size, type: f.type })));
+      
 
 //       let res;
 //       if (productId) {
-//         // keep your update variants API (unchanged)
 //         res = await updateVariantsApi(productId, variantsJson, variantFiles);
 //       } else {
 //         res = await createVariantsApi(variantsJson, variantFiles);
 //       }
 
 //       toast.success("Variants saved ✅");
-//       // do not repopulate from static data; we clear local panels as before
 //       setWeights([]);
 //       setSizes([]);
 //       setColors([]);
@@ -566,6 +495,10 @@
 //       setIsSaving(false);
 //     }
 //   };
+
+//   /* ------------------------------
+//      Small UI helpers & renderEntry (kept same)
+//   ------------------------------ */
 //   const fileLabelShort = (f) => {
 //     if (!f) return "Choose";
 //     const name = f.name ? String(f.name).split("/").pop() : "";
@@ -581,7 +514,6 @@
 //     return (
 //       <div key={e.uid} className="p-2 border rounded-md bg-white shadow-sm">
 //         <div className="flex items-start gap-2">
-//           {/* Value */}
 //           <div className="flex flex-col">
 //             <label className="text-xs text-slate-500">{type === "size" ? "Size" : type === "color" ? "Color" : type === "material" ? "Material" : "Weight"}</label>
 
@@ -613,7 +545,6 @@
 //             {errors[`value-${e.uid}`] && <div className="text-[11px] text-red-600 mt-1">{errors[`value-${e.uid}`]}</div>}
 //           </div>
 
-//           {/* Price */}
 //           <div className="flex flex-col">
 //             <label className="text-xs text-slate-500">Price</label>
 //             <input
@@ -626,14 +557,12 @@
 //             {errors[`price-${e.uid}`] && <div className="text-[11px] text-red-600 mt-1">{errors[`price-${e.uid}`]}</div>}
 //           </div>
 
-//           {/* Inline preview */}
 //           <div className="flex items-center gap-2 ml-1 mt-5">
 //             <div className="w-8 h-8 rounded-sm overflow-hidden border bg-slate-50 flex items-center justify-center">
 //               {e.imagePreview ? <img src={e.imagePreview} alt={`variant-${e.uid}`} className="w-full h-full object-cover" /> : <div className="text-[11px] text-slate-400">No</div>}
 //             </div>
 //           </div>
 
-//           {/* File chooser */}
 //           <div className="flex flex-col">
 //             <label className="text-xs text-slate-500">Image</label>
 //             <div className="mt-1 flex items-center gap-2">
@@ -661,39 +590,22 @@
 //             </div>
 //           </div>
 
-//           {/* Edit / Save / Cancel / Delete buttons */}
 //           <div className="ml-auto flex flex-col gap-2">
 //             {!editable ? (
 //               <div className="flex gap-2">
-//                 <button
-//                   type="button"
-//                   onClick={() => startEdit(type, e.uid)}
-//                   className="inline-flex items-center gap-2 px-2 py-1 rounded border bg-white text-xs hover:bg-slate-50"
-//                 >
+//                 <button type="button" onClick={() => startEdit(type, e.uid)} className="inline-flex items-center gap-2 px-2 py-1 rounded border bg-white text-xs hover:bg-slate-50">
 //                   Edit
 //                 </button>
-//                 <button
-//                   type="button"
-//                   onClick={() => removeEntry(type, e.uid)}
-//                   className="inline-flex items-center gap-2 px-2 py-1 rounded border text-xs hover:bg-red-50"
-//                 >
+//                 <button type="button" onClick={() => removeEntry(type, e.uid)} className="inline-flex items-center gap-2 px-2 py-1 rounded border text-xs hover:bg-red-50">
 //                   Delete
 //                 </button>
 //               </div>
 //             ) : (
 //               <div className="flex gap-2">
-//                 <button
-//                   type="button"
-//                   onClick={() => saveEdit(type, e.uid)}
-//                   className="inline-flex items-center gap-2 px-2 py-1 rounded border bg-emerald-600 text-white text-xs hover:bg-emerald-700"
-//                 >
+//                 <button type="button" onClick={() => saveEdit(type, e.uid)} className="inline-flex items-center gap-2 px-2 py-1 rounded border bg-emerald-600 text-white text-xs hover:bg-emerald-700">
 //                   Save
 //                 </button>
-//                 <button
-//                   type="button"
-//                   onClick={() => cancelEdit(type, e.uid)}
-//                   className="inline-flex items-center gap-2 px-2 py-1 rounded border text-xs hover:bg-slate-100"
-//                 >
+//                 <button type="button" onClick={() => cancelEdit(type, e.uid)} className="inline-flex items-center gap-2 px-2 py-1 rounded border text-xs hover:bg-slate-100">
 //                   Cancel
 //                 </button>
 //               </div>
@@ -704,11 +616,94 @@
 //     );
 //   };
 
-//   /* ------------------------------
-//      Render
-//      ------------------------------ */
 //   const visibleTypes = visibleTypesForStore(storeType, selectedVariation);
 
+//   /* ------------------------------
+//      --- MISSING functions fixed below ---
+//      createVariation / updateVariation / deleteVariation
+//      (these were missing in your last paste — that produced the issue)
+//   ------------------------------ */
+
+//   const createVariation = async () => {
+//     const name = String(variationFormName || "").trim();
+//     if (!name) {
+//       toast.error("Name required");
+//       return;
+//     }
+//     setVariationSubmitting(true);
+//     try {
+//       const fd = new FormData();
+//       fd.append("name", name);
+//       const res = await api.post("/admin/variation/add", fd, {
+//         headers: { "Content-Type": "multipart/form-data" },
+//       });
+//       toast.success("Variation created");
+//       setIsVariationModalOpen(false);
+//       setVariationFormName("");
+//       await fetchVariationsList();
+//       return res;
+//     } catch (err) {
+//       console.error("createVariation error", err);
+//       const msg = err?.response?.data?.message ?? err?.message ?? "Failed to create variation";
+//       toast.error(String(msg));
+//       throw err;
+//     } finally {
+//       setVariationSubmitting(false);
+//     }
+//   };
+
+//   const updateVariation = async () => {
+//     const name = String(variationFormName || "").trim();
+//     if (!name) {
+//       toast.error("Name required");
+//       return;
+//     }
+//     if (!variationEditingId) {
+//       toast.error("No variation selected to update");
+//       return;
+//     }
+//     setVariationSubmitting(true);
+//     try {
+//       const fd = new FormData();
+//       fd.append("name", name);
+//       const res = await api.post(`/admin/variation/update/${variationEditingId}`, fd, {
+//         headers: { "Content-Type": "multipart/form-data" },
+//       });
+//       toast.success("Variation updated");
+//       setIsVariationModalOpen(false);
+//       setVariationFormName("");
+//       setVariationEditingId(null);
+//       await fetchVariationsList();
+//       return res;
+//     } catch (err) {
+//       console.error("updateVariation error", err);
+//       const msg = err?.response?.data?.message ?? err?.message ?? "Failed to update variation";
+//       toast.error(String(msg));
+//       throw err;
+//     } finally {
+//       setVariationSubmitting(false);
+//     }
+//   };
+
+//   const deleteVariation = async (id) => {
+//     if (!id) return;
+//     // eslint-disable-next-line no-restricted-globals
+//     if (!confirm("Delete this variation? This cannot be undone.")) return;
+//     try {
+//       await api.delete(`/admin/variation/delete/${id}`);
+//       toast.success("Variation deleted");
+//       await fetchVariationsList();
+//     } catch (err) {
+//       console.error("deleteVariation error", err);
+//       const msg = err?.response?.data?.message ?? err?.message ?? "Failed to delete variation";
+//       toast.error(String(msg));
+//       throw err;
+//     }
+//   };
+
+//   /* ------------------------------
+//      Render (kept your layout + behaviour)
+//   ------------------------------ */
 //   return (
 //     <div className="w-full max-w-full mx-auto p-4 flex flex-col items-start justify-start">
 //       <h3 className="text-lg font-semibold mb-3">Manage Variants</h3>
@@ -733,13 +728,21 @@
 //           </div>
 
 //           <div>
-//             <Button onClick={() => setIsVariationModalOpen(true)}>Add Variants</Button>
+//             <Button
+//               onClick={() => {
+//                 setVariationEditingId(null);
+//                 setVariationFormName("");
+//                 setIsVariationModalOpen(true);
+//               }}
+//             >
+//               Add Variants
+//             </Button>
 //           </div>
 
 //           <div className="text-sm text-slate-500 ml-auto">{attrsLoading ? "Loading attributes..." : `${(attributesRaw || []).length} attributes`}</div>
 //         </div>
 
-//         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+//         {variationsList.length>0&&<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 //           {visibleTypes.includes("weight") && (
 //             <div className="border rounded-lg p-3 bg-gray-50">
 //               <div className="flex items-center justify-between mb-3">
@@ -818,42 +821,16 @@
 //               <div className="space-y-2">{materials.length === 0 ? <div className="text-sm text-slate-500 p-2">No materials yet. Use the quick chips above to add common materials.</div> : materials.map((m) => renderEntry("material", m))}</div>
 //             </div>
 //           )}
-//         </div>
+//         </div>}
 
 //         {errors.variants && <div className="text-sm text-red-600 mt-3">{errors.variants}</div>}
 
 //         <div className="mt-4 flex justify-end gap-2">
-//           <Button
-//             type="button"
-//             onClick={() => {
-//               setWeights([]);
-//               setSizes([]);
-//               setColors([]);
-//               setMaterials([]);
-//               setErrors({});
-//               snapshotRef.current = {};
-//             }}
-//             className="bg-white"
-//           >
-//             Reset
-//           </Button>
-
-//           <Button
-//             onClick={async () => {
-//               try {
-//                 await saveVariants();
-//               } catch {
-//                 /* handled in saveVariants */
-//               }
-//             }}
-//             disabled={isSaving}
-//           >
-//             {isSaving ? "Saving..." : productId ? "Save Variants" : "Create Variants"}
-//           </Button>
+          
 //         </div>
 //       </div>
 
-//       {/* Variation modal (unchanged) */}
+//       {/* Variation modal */}
 //       {isVariationModalOpen && (
 //         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 //           <div
@@ -919,7 +896,7 @@
 //                       /* handled above */
 //                     }
 //                   }}
-//                   disabled={variationSubmitting}
+//                   disabled={variationSubmitting || !String(variationFormName || "").trim()}
 //                 >
 //                   {variationSubmitting ? "Saving..." : variationEditingId ? "Update" : "Create"}
 //                 </Button>
@@ -929,10 +906,10 @@
 //         </div>
 //       )}
 
-//       {/* Server variations quick list (unchanged) */}
-//       <div className="mt-4 w-full max-w-full">
+//       {/* Server variations quick list */}
+//       <div className="border rounded-lg p-3 bg-gray-50 wmt-4" style={{width:"33%"}}>
 //         <div className="bg-white p-3 rounded shadow-sm">
-//           <div className="flex items-center justify-between mb-2">
+//           <div className="flex items-center justify-evenly mb-2">
 //             <div className="text-xs text-slate-500">{variationsLoading ? "Loading..." : `${variationsList.length} items`}</div>
 //           </div>
 
@@ -1008,9 +985,8 @@
 // }
 
 // /* -------------------------
-//    Additional server-attribute helper functions (you can reuse elsewhere)
+//    Additional server-attribute helper functions (optional exports)
 //    -------------------------*/
-// // create attribute
 // export async function createAttributeApi({ variation_id, attribute_name, price, imageFile = null }) {
 //   const fd = new FormData();
 //   fd.append("variation_id", String(variation_id));
@@ -1021,7 +997,6 @@
 //   return res.data ?? res;
 // }
 
-// // update attribute
 // export async function updateAttributeApi(id, { variation_id, attribute_name, price, imageFile = null }) {
 //   const fd = new FormData();
 //   if (variation_id != null) fd.append("variation_id", String(variation_id));
@@ -1034,11 +1009,15 @@
 
 
 
+
+
+
+// src/components/VariantsEditor.jsx
 import React, { useEffect, useRef, useState } from "react";
-import api from "../api/axios"; // adjust path if needed
 import { Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import { useVariantContext } from "@/components/contexts/variantContext"; // adjust path if needed
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
 
@@ -1051,6 +1030,22 @@ function isValidMoney(s) {
 }
 
 export default function VariantsEditor({ productId = null, initialVariants = {}, onChange = null }) {
+  const {
+    loading: ctxLoading,
+    fetchVariations,
+    fetchAttributes,
+    createVariation,
+    updateVariation,
+    deleteVariation,
+    createAttribute,
+    updateAttribute,
+    createVariants,
+    updateVariants,
+    // optional: if your VariantContext exposes deleteAttribute, it will be used
+    // otherwise deletions will be handled locally + a warning toast.
+    deleteAttribute,
+  } = useVariantContext();
+
   // normalize incoming attributes (if provided)
   const normalizeIncoming = (arr) =>
     Array.isArray(arr)
@@ -1161,16 +1156,22 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
     const arr = getArrayByType(type);
     const target = arr.find((it) => it.uid === uid);
     if (target?.id) {
-      // server delete
+      // server delete via context if provided, otherwise remove locally and warn
+      // keep the same confirm behavior
       // eslint-disable-next-line no-restricted-globals
       if (!confirm("Delete attribute? This cannot be undone.")) return;
-      try {
-        await api.delete(`/admin/attributes/delete/${target.id}`);
-        toast.success("Attribute deleted");
-      } catch (err) {
-        console.error("delete attribute error", err);
-        toast.error("Failed to delete attribute");
-        return;
+      if (typeof deleteAttribute === "function") {
+        try {
+          await deleteAttribute(target.id);
+          toast.success("Attribute deleted");
+        } catch (err) {
+          console.error("delete attribute error", err);
+          toast.error("Failed to delete attribute");
+          return;
+        }
+      } else {
+        // context doesn't implement deleteAttribute — remove locally and inform dev
+        toast("Attribute removed locally. Add deleteAttribute to VariantContext to delete server-side.", { icon: "⚠️" });
       }
     }
     if (type === "weight") setWeights((p) => p.filter((it) => it.uid !== uid));
@@ -1210,28 +1211,29 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
       return;
     }
 
-    // persist via attributes API when variation selected
+    // persist via attributes API when variation selected (use context)
     if (selectedVariation && selectedVariation.id) {
       try {
-        const fd = new FormData();
-        fd.append("variation_id", String(selectedVariation.id));
-        fd.append("attribute_name", String(target.value));
-        fd.append("price", String(target.price ?? ""));
-        if (target.imageFile) fd.append("image", target.imageFile);
-
         if (!target.id) {
-          const res = await api.post("/admin/attributes/add", fd, {
-            headers: { "Content-Type": "multipart/form-data" },
+          // create via context
+          const created = await createAttribute({
+            variation_id: String(selectedVariation.id),
+            attribute_name: String(target.value),
+            price: String(target.price ?? ""),
+            imageFile: target.imageFile ?? null,
           });
-          const created = res?.data ?? res;
           const newId = created?.id ?? created?.data?.id ?? null;
           const image_url = created?.image_url ?? created?.data?.image_url ?? created?.data?.image ?? null;
           updateField(type, uid, "id", newId);
           if (image_url) updateField(type, uid, "imagePreview", image_url);
           toast.success("Attribute created");
         } else {
-          await api.post(`/admin/attributes/update/${target.id}`, fd, {
-            headers: { "Content-Type": "multipart/form-data" },
+          // update via context
+          await updateAttribute(target.id, {
+            variation_id: String(selectedVariation.id),
+            attribute_name: String(target.value),
+            price: String(target.price ?? ""),
+            imageFile: target.imageFile ?? null,
           });
           toast.success("Attribute updated");
         }
@@ -1295,7 +1297,6 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
     if (type === "material") return materials;
     return [];
   };
-
   const handleImageChange = (type, uid, e) => {
     const file = e.target.files?.[0] ?? null;
     const clear = () => {
@@ -1338,15 +1339,10 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
     } catch {}
   };
 
-  /* ------------------------------
-     Attributes API integration: fetch & populate
-  ------------------------------ */
-  const fetchAttributes = async () => {
+  const fetchAttributesRaw = async (opts = {}) => {
     setAttrsLoading(true);
     try {
-      const res = await api.get("/admin/attributes");
-      const data = res?.data ?? res;
-      const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+      const list = await fetchAttributes(opts);
       setAttributesRaw(list);
     } catch (err) {
       console.error("fetchAttributes error", err);
@@ -1392,15 +1388,13 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
   };
 
   /* ------------------------------
-     fetch variations (server) and attributes on mount
+     fetch variations (server) and attributes on mount (via context)
   ------------------------------ */
   const fetchVariationsList = async () => {
     setVariationsLoading(true);
     setVariationsError(null);
     try {
-      const res = await api.get("/admin/variation");
-      const data = res?.data ?? res;
-      const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+      const list = await fetchVariations();
       setVariationsList(list);
     } catch (err) {
       console.error("fetchVariationsList error", err);
@@ -1413,7 +1407,7 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
 
   useEffect(() => {
     fetchVariationsList();
-    fetchAttributes();
+    fetchAttributesRaw();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1431,15 +1425,7 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
     setSelectedVariation(found ?? null);
 
     try {
-      // try filtered fetch (if API supports query param)
-      let res;
-      try {
-        res = await api.get(`/admin/attributes?variation_id=${String(found.id ?? found.ID ?? found.value)}`);
-      } catch {
-        res = await api.get(`/admin/attributes`);
-      }
-      const data = res?.data ?? res;
-      const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+      const list = await fetchAttributes({ variation_id: String(found.id ?? found.ID ?? found.value) });
       setAttributesRaw(list);
     } catch (err) {
       console.error("onVariationSelectChange fetch attributes error", err);
@@ -1448,7 +1434,7 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
   };
 
   /* ------------------------------
-     Variant JSON building + save (unchanged)
+     Variant JSON building + save (uses context instead of local api calls)
   ------------------------------ */
   const buildVariantsJson = () => ({
     weight: weights.map((w) => ({ uid: w.uid, id: w.id, value: w.value, price: w.price })),
@@ -1505,15 +1491,12 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
     try {
       const variantsJson = buildVariantsJson();
       const variantFiles = collectVariantFiles();
-      console.log("Saving variants — productId:", productId ?? "(none)");
-      console.log("variantsJson:", JSON.stringify(variantsJson, null, 2));
-      console.log("variantFiles:", variantFiles.map((f) => ({ name: f.name, size: f.size, type: f.type })));
 
       let res;
       if (productId) {
-        res = await updateVariantsApi(productId, variantsJson, variantFiles);
+        res = await updateVariants(productId, variantsJson, variantFiles);
       } else {
-        res = await createVariantsApi(variantsJson, variantFiles);
+        res = await createVariants(variantsJson, variantFiles);
       }
 
       toast.success("Variants saved ✅");
@@ -1657,12 +1640,10 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
   const visibleTypes = visibleTypesForStore(storeType, selectedVariation);
 
   /* ------------------------------
-     --- MISSING functions fixed below ---
-     createVariation / updateVariation / deleteVariation
-     (these were missing in your last paste — that produced the issue)
+     Variation create / update / delete (use context)
   ------------------------------ */
 
-  const createVariation = async () => {
+  const localCreateVariation = async () => {
     const name = String(variationFormName || "").trim();
     if (!name) {
       toast.error("Name required");
@@ -1670,27 +1651,21 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
     }
     setVariationSubmitting(true);
     try {
-      const fd = new FormData();
-      fd.append("name", name);
-      const res = await api.post("/admin/variation/add", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await createVariation({ name });
       toast.success("Variation created");
       setIsVariationModalOpen(false);
       setVariationFormName("");
       await fetchVariationsList();
-      return res;
     } catch (err) {
       console.error("createVariation error", err);
       const msg = err?.response?.data?.message ?? err?.message ?? "Failed to create variation";
       toast.error(String(msg));
-      throw err;
     } finally {
       setVariationSubmitting(false);
     }
   };
 
-  const updateVariation = async () => {
+  const localUpdateVariation = async () => {
     const name = String(variationFormName || "").trim();
     if (!name) {
       toast.error("Name required");
@@ -1702,40 +1677,33 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
     }
     setVariationSubmitting(true);
     try {
-      const fd = new FormData();
-      fd.append("name", name);
-      const res = await api.post(`/admin/variation/update/${variationEditingId}`, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await updateVariation({ id: variationEditingId, name });
       toast.success("Variation updated");
       setIsVariationModalOpen(false);
       setVariationFormName("");
       setVariationEditingId(null);
       await fetchVariationsList();
-      return res;
     } catch (err) {
       console.error("updateVariation error", err);
       const msg = err?.response?.data?.message ?? err?.message ?? "Failed to update variation";
       toast.error(String(msg));
-      throw err;
     } finally {
       setVariationSubmitting(false);
     }
   };
 
-  const deleteVariation = async (id) => {
+  const localDeleteVariation = async (id) => {
     if (!id) return;
     // eslint-disable-next-line no-restricted-globals
     if (!confirm("Delete this variation? This cannot be undone.")) return;
     try {
-      await api.delete(`/admin/variation/delete/${id}`);
+      await deleteVariation(id);
       toast.success("Variation deleted");
       await fetchVariationsList();
     } catch (err) {
       console.error("deleteVariation error", err);
       const msg = err?.response?.data?.message ?? err?.message ?? "Failed to delete variation";
       toast.error(String(msg));
-      throw err;
     }
   };
 
@@ -1752,7 +1720,7 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
             <div className="text-sm font-medium">Variation</div>
             <select
               className="border rounded px-3 py-2 text-sm"
-              disabled={variationsLoading || variationsError}
+              disabled={variationsLoading || !!variationsError}
               value={selectedVariation ? String(selectedVariation.id ?? selectedVariation.ID ?? selectedVariation.value) : ""}
               onChange={(e) => onVariationSelectChange(e.target.value)}
             >
@@ -1780,116 +1748,94 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
           <div className="text-sm text-slate-500 ml-auto">{attrsLoading ? "Loading attributes..." : `${(attributesRaw || []).length} attributes`}</div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          {visibleTypes.includes("weight") && (
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-sm font-medium">Weights (grams)</div>
-                  <div className="text-xs text-slate-500">{weights.length} items</div>
-                </div>
-                <button type="button" onClick={() => addEntry("weight")} className="inline-flex items-center gap-2 px-2 py-1 rounded-md border hover:bg-slate-100 text-sm bg-white">
-                  <Plus className="w-3 h-3" /> Add
-                </button>
-              </div>
-
-              <div className="space-y-2">{weights.length === 0 ? <div className="text-sm text-slate-500 p-2">No weights yet.</div> : weights.map((w) => renderEntry("weight", w))}</div>
-            </div>
-          )}
-
-          {visibleTypes.includes("size") && (
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-sm font-medium">Sizes</div>
-                  <div className="text-xs text-slate-500">{sizes.length} items</div>
-                </div>
-                <button type="button" onClick={() => addEntry("size")} className="inline-flex items-center gap-2 px-2 py-1 rounded-md border hover:bg-slate-100 text-sm bg-white">
-                  <Plus className="w-3 h-3" /> Add
-                </button>
-              </div>
-
-              <div className="space-y-2">{sizes.length === 0 ? <div className="text-sm text-slate-500 p-2">No sizes yet.</div> : sizes.map((s) => renderEntry("size", s))}</div>
-            </div>
-          )}
-
-          {visibleTypes.includes("color") && (
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-sm font-medium">Colors</div>
-                  <div className="text-xs text-slate-500">{colors.length} items</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => addEntry("color")} className="inline-flex items-center gap-2 px-2 py-1 rounded-md border hover:bg-slate-100 text-sm bg-white">
+        {variationsList.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {visibleTypes.includes("weight") && (
+              <div className="border rounded-lg p-3 bg-gray-50">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="text-sm font-medium">Weights (grams)</div>
+                    <div className="text-xs text-slate-500">{weights.length} items</div>
+                  </div>
+                  <button type="button" onClick={() => addEntry("weight")} className="inline-flex items-center gap-2 px-2 py-1 rounded-md border hover:bg-slate-100 text-sm bg-white">
                     <Plus className="w-3 h-3" /> Add
                   </button>
                 </div>
+
+                <div className="space-y-2">{weights.length === 0 ? <div className="text-sm text-slate-500 p-2">No weights yet.</div> : weights.map((w) => renderEntry("weight", w))}</div>
               </div>
+            )}
 
-              <div className="space-y-2">{colors.length === 0 ? <div className="text-sm text-slate-500 p-2">No colors yet.</div> : colors.map((c) => renderEntry("color", c))}</div>
+            {visibleTypes.includes("size") && (
+              <div className="border rounded-lg p-3 bg-gray-50">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="text-sm font-medium">Sizes</div>
+                    <div className="text-xs text-slate-500">{sizes.length} items</div>
+                  </div>
+                  <button type="button" onClick={() => addEntry("size")} className="inline-flex items-center gap-2 px-2 py-1 rounded-md border hover:bg-slate-100 text-sm bg-white">
+                    <Plus className="w-3 h-3" /> Add
+                  </button>
+                </div>
 
-              {visibleTypes.includes("material") && (
-                <div className="mt-4">
-                  <div className="text-sm font-medium mb-2">Quick add materials</div>
-                  <div className="flex gap-2">
-                    {DEFAULT_MATERIAL_CHIPS.map((m) => (
-                      <button key={m} type="button" onClick={() => addEntry("material", m)} className="px-3 py-2 rounded border bg-white text-sm hover:shadow-sm">
-                        {m}
-                      </button>
-                    ))}
+                <div className="space-y-2">{sizes.length === 0 ? <div className="text-sm text-slate-500 p-2">No sizes yet.</div> : sizes.map((s) => renderEntry("size", s))}</div>
+              </div>
+            )}
+
+            {visibleTypes.includes("color") && (
+              <div className="border rounded-lg p-3 bg-gray-50">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="text-sm font-medium">Colors</div>
+                    <div className="text-xs text-slate-500">{colors.length} items</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => addEntry("color")} className="inline-flex items-center gap-2 px-2 py-1 rounded-md border hover:bg-slate-100 text-sm bg-white">
+                      <Plus className="w-3 h-3" /> Add
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
 
-          {visibleTypes.includes("material") && (
-            <div className="border rounded-lg p-3 bg-gray-50 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-sm font-medium">Materials</div>
-                  <div className="text-xs text-slate-500">{materials.length} items</div>
-                </div>
-                <button type="button" onClick={() => addEntry("material")} className="inline-flex items-center gap-2 px-2 py-1 rounded-md border hover:bg-slate-100 text-sm bg-white">
-                  <Plus className="w-3 h-3" /> Add
-                </button>
+                <div className="space-y-2">{colors.length === 0 ? <div className="text-sm text-slate-500 p-2">No colors yet.</div> : colors.map((c) => renderEntry("color", c))}</div>
+
+                {visibleTypes.includes("material") && (
+                  <div className="mt-4">
+                    <div className="text-sm font-medium mb-2">Quick add materials</div>
+                    <div className="flex gap-2">
+                      {DEFAULT_MATERIAL_CHIPS.map((m) => (
+                        <button key={m} type="button" onClick={() => addEntry("material", m)} className="px-3 py-2 rounded border bg-white text-sm hover:shadow-sm">
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
+            )}
 
-              <div className="space-y-2">{materials.length === 0 ? <div className="text-sm text-slate-500 p-2">No materials yet. Use the quick chips above to add common materials.</div> : materials.map((m) => renderEntry("material", m))}</div>
-            </div>
-          )}
-        </div>
+            {visibleTypes.includes("material") && (
+              <div className="border rounded-lg p-3 bg-gray-50 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="text-sm font-medium">Materials</div>
+                    <div className="text-xs text-slate-500">{materials.length} items</div>
+                  </div>
+                  <button type="button" onClick={() => addEntry("material")} className="inline-flex items-center gap-2 px-2 py-1 rounded-md border hover:bg-slate-100 text-sm bg-white">
+                    <Plus className="w-3 h-3" /> Add
+                  </button>
+                </div>
+
+                <div className="space-y-2">{materials.length === 0 ? <div className="text-sm text-slate-500 p-2">No materials yet. Use the quick chips above to add common materials.</div> : materials.map((m) => renderEntry("material", m))}</div>
+              </div>
+            )}
+          </div>
+        )}
 
         {errors.variants && <div className="text-sm text-red-600 mt-3">{errors.variants}</div>}
 
         <div className="mt-4 flex justify-end gap-2">
-          <Button
-            type="button"
-            onClick={() => {
-              setWeights([]);
-              setSizes([]);
-              setColors([]);
-              setMaterials([]);
-              setErrors({});
-              snapshotRef.current = {};
-            }}
-            className="bg-white"
-          >
-            Reset
-          </Button>
-
-          <Button
-            onClick={async () => {
-              try {
-                await saveVariants();
-              } catch {
-                /* handled in saveVariants */
-              }
-            }}
-            disabled={isSaving}
-          >
-            {isSaving ? "Saving..." : productId ? "Save Variants" : "Create Variants"}
+          <Button onClick={saveVariants} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save variants"}
           </Button>
         </div>
       </div>
@@ -1952,12 +1898,12 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
                   onClick={async () => {
                     try {
                       if (variationEditingId) {
-                        await updateVariation();
+                        await localUpdateVariation();
                       } else {
-                        await createVariation();
+                        await localCreateVariation();
                       }
                     } catch {
-                      /* handled above */
+                      /* handled in local functions */
                     }
                   }}
                   disabled={variationSubmitting || !String(variationFormName || "").trim()}
@@ -1971,7 +1917,7 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
       )}
 
       {/* Server variations quick list */}
-      <div className="border rounded-lg p-3 bg-gray-50 wmt-4" >
+      <div className="border rounded-lg p-3 bg-gray-50 wmt-4" style={{ width: "33%" }}>
         <div className="bg-white p-3 rounded shadow-sm">
           <div className="flex items-center justify-evenly mb-2">
             <div className="text-xs text-slate-500">{variationsLoading ? "Loading..." : `${variationsList.length} items`}</div>
@@ -2000,16 +1946,13 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
                     <button
                       type="button"
                       onClick={async () => {
-                        // delete variation (unchanged)
+                        // delete variation via context
                         // eslint-disable-next-line no-restricted-globals
                         if (!confirm("Delete this variation? This cannot be undone.")) return;
                         try {
-                          await api.delete(`/admin/variation/delete/${v.id ?? v.ID}`);
-                          toast.success("Variation deleted");
-                          await fetchVariationsList();
+                          await localDeleteVariation(v.id ?? v.ID);
                         } catch (err) {
-                          console.error("deleteVariation error", err);
-                          toast.error("Failed to delete variation");
+                          /* handled in localDeleteVariation */
                         }
                       }}
                       title="Delete"
@@ -2027,46 +1970,4 @@ export default function VariantsEditor({ productId = null, initialVariants = {},
       </div>
     </div>
   );
-}
-
-/* -------------------------
-   Helper API functions used earlier by your code (kept as-is)
-   -------------------------*/
-async function createVariantsApi(variantsJson, variantFiles) {
-  const fd = new FormData();
-  fd.append("variants", JSON.stringify(variantsJson));
-  (variantFiles || []).forEach((f) => fd.append("variant_images[]", f));
-  const res = await api.post("/admin/variants/add", fd, { headers: { "Content-Type": "multipart/form-data" } });
-  return res.data ?? res;
-}
-
-async function updateVariantsApi(productId, variantsJson, variantFiles) {
-  const fd = new FormData();
-  fd.append("variants", JSON.stringify(variantsJson));
-  (variantFiles || []).forEach((f) => fd.append("variant_images[]", f));
-  const res = await api.post(`/admin/products/${productId}/variants`, fd, { headers: { "Content-Type": "multipart/form-data" } }).catch(() => ({}));
-  return res.data ?? res;
-}
-
-/* -------------------------
-   Additional server-attribute helper functions (optional exports)
-   -------------------------*/
-export async function createAttributeApi({ variation_id, attribute_name, price, imageFile = null }) {
-  const fd = new FormData();
-  fd.append("variation_id", String(variation_id));
-  fd.append("attribute_name", String(attribute_name));
-  fd.append("price", String(price ?? ""));
-  if (imageFile) fd.append("image", imageFile);
-  const res = await api.post("/admin/attributes/add", fd, { headers: { "Content-Type": "multipart/form-data" } });
-  return res.data ?? res;
-}
-
-export async function updateAttributeApi(id, { variation_id, attribute_name, price, imageFile = null }) {
-  const fd = new FormData();
-  if (variation_id != null) fd.append("variation_id", String(variation_id));
-  if (attribute_name != null) fd.append("attribute_name", String(attribute_name));
-  if (price != null) fd.append("price", String(price));
-  if (imageFile) fd.append("image", imageFile);
-  const res = await api.post(`/admin/attributes/update/${id}`, fd, { headers: { "Content-Type": "multipart/form-data" } });
-  return res.data ?? res;
 }

@@ -1569,97 +1569,55 @@ export default function POS() {
   id="cart-sidebar"
   className={`fixed top-0 right-0 h-full z-50 bg-white shadow-2xl border-l transform transition-transform duration-300
     ${cartOpen ? "translate-x-0" : "translate-x-full"} lg:translate-x-0`}
-  style={{ width: "39%", maxWidth: 820 }}
+  style={{ width: "39%", maxWidth: 820,}}
   role="region"
   aria-label="Cart"
 >
   <div className="p-4 md:p-6 h-full flex flex-col">
-    <div className="flex items-center justify-between mb-4">
-        <div
-  style={{
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: "10px",
-    justifyContent: "space-between",
-    width: "100%",
-  }}
->
-  <h3 className="text-xl font-semibold">Cart</h3>
-  <div className="mt-4">
-    <div
-      className="grid grid-cols-3 gap-3 items-center rounded-md"
-      // style={{ border: "1px solid black" }}
-    >
-      {/* Bill No */}
-      <div className="flex flex-col w-full">
-        <label className="text-xl font-semibold">Bill No:{billno}</label>
-      </div>
-      {/* Search */}
-      <div className="flex flex-col w-full">
-        <label className="text-xs text-slate-600 mb-1">Search</label>
-        <input
-          type="text"
-          // value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search..."
-          className="w-full px-2 py-1.5 border rounded text-sm"
-        />
-      </div>
+      <div className="flex flex-col items-start w-full border border-black p-4 rounded-md mb-2">
+  {/* First Row: Cart title, Bill No, Search */}
+  <div className="flex flex-wrap items-center justify-between w-full gap-4 mb-3">
+    <h3 className="text-xl font-semibold whitespace-nowrap">Cart</h3>
+    <div className="flex items-center gap-2 whitespace-nowrap">
+      <label className="text-xl font-semibold whitespace-nowrap">Bill No:{billno}</label>
+    </div>
+    <div className="flex flex-col">
+      <label className="text-xs text-slate-600 mb-1">Search</label>
+      <input
+        type="text"
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Search..."
+        className="px-2 py-1.5 border rounded text-sm w-48"
+      />
+    </div>
+  </div>
 
-      {/* Empty space to align next row */}
-      <div></div>
+  {/* Second Row: Customer Name and WhatsApp Number */}
+  <div className="flex flex-wrap items-center justify-start w-full gap-4">
+    <div className="flex flex-col w-48">
+      <label className="text-xs text-slate-600 mb-1">Customer Name</label>
+      <input
+        type="text"
+        value={customerName}
+        onChange={(e) => setCustomerName(e.target.value)}
+        placeholder="Enter name"
+        className="px-2 py-1.5 border rounded text-sm w-full"
+      />
+    </div>
 
-      {/* Customer Name */}
-      <div className="flex flex-col w-full">
-        <label className="text-xs text-slate-600 mb-1">Customer Name</label>
-        <input
-          type="text"
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          placeholder="Enter name"
-          className="w-full px-2 py-1.5 border rounded text-sm"
-        />
-      </div>
-
-      {/* WhatsApp Number */}
-      <div className="flex flex-col w-full">
-        <label className="text-xs text-slate-600 mb-1">WhatsApp Number</label>
-        <input
-          type="tel"
-          value={customerPhone}
-          onChange={(e) => setCustomerPhone(e.target.value)}
-          placeholder="+91 9XXXXXXXXX"
-          className="w-full px-2 py-1.5 border rounded text-sm"
-        />
-      </div>
-
-      {/* Payment Method */}
-      <div className="flex flex-col w-full">
-        <label className="text-xs text-slate-600 mb-1">Payment</label>
-        <select
-          value={paymentMethod}
-          onChange={(e) => setPaymentMethod(e.target.value)}
-          className="w-full px-2 py-1.5 border rounded text-sm"
-        >
-          <option value="">Select</option>
-          <option value="card">Card</option>
-          <option value="upi">UPI</option>
-          <option value="cash">Cash</option>
-        </select>
-      </div>
+    <div className="flex flex-col w-48">
+      <label className="text-xs text-slate-600 mb-1">WhatsApp Number</label>
+      <input
+        type="tel"
+        value={customerPhone}
+        onChange={(e) => setCustomerPhone(e.target.value)}
+        placeholder="+91 9XXXXXXXXX"
+        className="px-2 py-1.5 border rounded text-sm w-full"
+      />
     </div>
   </div>
 </div>
 
-     
-     
-      {!isLg && (
-        <button onClick={() => setCartOpen(false)} className="ml-2 p-2 rounded border hover:bg-slate-50">
-          <X />
-        </button>
-      )}
-    </div>
 
     <div className="flex-1 overflow-hidden">
       {cartLines.length === 0 ? (
@@ -1677,8 +1635,8 @@ export default function POS() {
           <div className="overflow-auto" style={{ maxHeight: "56vh", margin: "10px" }}>
             <table className="min-w-full table-fixed text-[12px] border-collapse">
               {/* sticky header */}
-              <thead className="sticky top-0 z-10">
-                <tr className="bg-blue-700 text-black text-sm">
+              <thead className="sticky top-0 z-10 bg-gray-100 border border-gray-300">
+                <tr className="bg-blue-900 text-black text-sm">
                   {/* <th className="p-2 w-8 text-left">No.</th> */}
                   <th className="p-2 w-28 text-center text-sm">Item No.</th>
                   <th className="p-2 text-left  text-sm">Item Name</th>
@@ -1691,7 +1649,7 @@ export default function POS() {
                   {/* <th className="p-2 w-20 text-left">UOM</th> */}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white" style={{ border: "0.5px solid black" }}>
+              <tbody className="divide-y divide-slate-100 bg-white border-gray-300">
                 {cartLines.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-6 text-center text-slate-400">
@@ -1725,9 +1683,9 @@ export default function POS() {
                               <div className="font-medium text-slate-800 text-sm truncate leading-tight">
                                 {prod.name}
                               </div>
-                              <div className="text-xs text-slate-500 mt-0.5 leading-tight">
+                              {/* <div className="text-xs text-slate-500 mt-0.5 leading-tight">
                                 {prod.unit ?? prod.sku}
-                              </div>
+                              </div> */}
                             </div>
                           </div>
                         </td>
@@ -1767,17 +1725,17 @@ export default function POS() {
     <div className="mt-4 border-t pt-4">
       <div className="flex flex-wrap justify-between items-center gap-4 mb-2 text-sm">
         <div className="flex items-center gap-1 text-slate-600">
-          <span>Subtotal:</span>
+          <span className="font-medium text-black">Subtotal:</span>
           <span className="font-medium text-black">₹ {subTotal.toFixed(2)}</span>
         </div>
 
         <div className="flex items-center gap-1 text-slate-600">
-          <span>GST ({gstPercent}%):</span>
+          <span className="font-medium text-black">GST ({gstPercent}%):</span>
           <span className="font-medium text-black">₹ {gstAmount.toFixed(2)}</span>
         </div>
 
         <div className="flex items-center gap-1 text-slate-600">
-          <span>Discount:</span>
+          <span className="font-medium text-black">Discount:</span>
           <span className="font-medium text-black">- ₹ {discountAmount.toFixed(2)}</span>
         </div>
       </div>
@@ -1809,25 +1767,38 @@ export default function POS() {
         <div className="text-2xl font-extrabold">₹ {total.toFixed(2)}</div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: "10px", gap: "10px" }}>
-        {/* Opens modal to add customer info */}
-        {/* <button
-          type="button"
-          onClick={() => setShowCustomerModal(true)}
-          className="ml-auto px-6 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700"
-        >
-          Add customer details +
-        </button> */}
+      <div className="flex items-center justify-end gap-4">
+  {/* Payment Method */}
+  <div className="flex flex-col w-1/3">
+    <label className="text-xs text-slate-600 mb-1">Payment</label>
+    <select
+      value={paymentMethod}
+      onChange={(e) => setPaymentMethod(e.target.value)}
+      className="w-full px-2 py-1.5 border rounded text-sm"
+    >
+      <option value="">Select</option>
+      <option value="card">Card</option>
+      <option value="upi">UPI</option>
+      <option value="cash">Cash</option>
+    </select>
+  </div>
 
-        {/* Purchase button — remains guarded by validations */}
-        <button
-          onClick={() => void handleCheckout()}
-          disabled={isCheckingOut || cartLines.length === 0 || !validName(customerName) || !validPhone(customerPhone) || !paymentMethod}
-          className="px-6 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60"
-        >
-          {isCheckingOut ? "Processing…" : `Purchase ₹ ${total.toFixed(2)}`}
-        </button>
-      </div>
+  {/* Checkout Button */}
+  <button
+    onClick={() => void handleCheckout()}
+    disabled={
+      isCheckingOut ||
+      cartLines.length === 0 ||
+      !validName(customerName) ||
+      !validPhone(customerPhone) ||
+      !paymentMethod
+    }
+    className="px-6 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 h-[42px] mt-5"
+  >
+    {isCheckingOut ? "Processing…" : `Purchase ₹ ${total.toFixed(2)}`}
+  </button>
+</div>
+
     </div>
   </div>
 </aside>

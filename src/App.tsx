@@ -55,9 +55,10 @@ import AssetsManagement from "./pages/AssetsManagement";
 import ConsolidatedVehiclePay from "./pages/ConsolidatedVehiclePay";
 import RentVehiclePaymentsList from "./pages/RentVehiclePaymentsList";
 import FranchiseRequests from "./pages/FranchiseRequests";
-import TestProducts from "./pages/TestProducts";
+import  TestProducts from "./pages/TestProducts";
 import CommingSoon from "./pages/CommingSoon";
 import Bannerspage from "./pages/Bannerspage"
+import { VariantProvider } from "@/components/contexts/variantContext";
 import TestPos from   "./pages/TestPos";
 import PublicRoute from "@/components/auth/ProtectedRoute";
 import { CategoriesProvider } from "@/components/contexts/categoriesContext";
@@ -74,6 +75,7 @@ const App = () => (
       <AuthProvider>
         <GstProvider>
           <CategoriesProvider>
+            <VariantProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginForm />} />
@@ -552,6 +554,7 @@ const App = () => (
             />
           </Routes>
         </BrowserRouter>
+        </VariantProvider>
         </CategoriesProvider>
         </GstProvider>
       </AuthProvider>
