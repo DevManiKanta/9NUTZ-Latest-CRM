@@ -976,7 +976,7 @@ export default function POS() {
   const billNoRef = useRef(Math.floor(Math.random() * 10000));
   const [cartOpen, setCartOpen] = useState(true); // controls drawer on small screens
   const [isLg, setIsLg] = useState(true); // track whether viewport is large (desktop)
-
+  const [billno, setBillno] = useState(1);
   // Sync initial viewport size and listen for resize to update isLg
   useEffect(() => {
     function update() {
@@ -1177,6 +1177,9 @@ export default function POS() {
       const res = await api.post("admin/pos-orders/create", payload, { headers: { "Content-Type": "application/json" } });
       const body = res.data;
       toast.success("Purchase successful");
+      if(body){
+        setBillno(billno + 1);
+      }
       setCartMap({});
       setCustomerName("");
       setCustomerPhone("");
@@ -1572,58 +1575,85 @@ export default function POS() {
 >
   <div className="p-4 md:p-6 h-full flex flex-col">
     <div className="flex items-center justify-between mb-4">
-      <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px", justifyContent: "space-between", width: "100%" }}>
-        <h3 className="text-xl font-semibold">Cart</h3>
-          <div className="mt-4">
-      <div
-  className="grid grid-cols-3 gap-3 items-center  rounded-md"
-//   style={{ border: "1px solid black" }}
+        <div
+  style={{
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: "10px",
+    justifyContent: "space-between",
+    width: "100%",
+  }}
 >
-  {/* Customer Name */}
-  <div className="flex flex-col w-full">
-    <label className="text-xs text-slate-600 mb-1">Customer Name</label>
-    <input
-      type="text"
-      value={customerName}
-      onChange={(e) => setCustomerName(e.target.value)}
-      placeholder="Enter name"
-      className="w-full px-2 py-1.5 border rounded text-sm"
-    />
-  </div>
-
-  {/* WhatsApp Number */}
-  <div className="flex flex-col w-full">
-    <label className="text-xs text-slate-600 mb-1">WhatsApp Number</label>
-    <input
-      type="tel"
-      value={customerPhone}
-      onChange={(e) => setCustomerPhone(e.target.value)}
-      placeholder="+91 9XXXXXXXXX"
-      className="w-full px-2 py-1.5 border rounded text-sm"
-    />
-  </div>
-
-  {/* Payment Method */}
-  <div className="flex flex-col w-full">
-    <label className="text-xs text-slate-600 mb-1">Payment</label>
-    <select
-      value={paymentMethod}
-      onChange={(e) => setPaymentMethod(e.target.value)}
-      className="w-full px-2 py-1.5 border rounded text-sm"
+  <h3 className="text-xl font-semibold">Cart</h3>
+  <div className="mt-4">
+    <div
+      className="grid grid-cols-3 gap-3 items-center rounded-md"
+      // style={{ border: "1px solid black" }}
     >
-      <option value="">Select</option>
-      <option value="card">Card</option>
-      <option value="upi">UPI</option>
-      <option value="cash">Cash</option>
-    </select>
+      {/* Bill No */}
+      <div className="flex flex-col w-full">
+        <label className="text-xl font-semibold">Bill No:{billno}</label>
+      </div>
+      {/* Search */}
+      <div className="flex flex-col w-full">
+        <label className="text-xs text-slate-600 mb-1">Search</label>
+        <input
+          type="text"
+          // value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search..."
+          className="w-full px-2 py-1.5 border rounded text-sm"
+        />
+      </div>
+
+      {/* Empty space to align next row */}
+      <div></div>
+
+      {/* Customer Name */}
+      <div className="flex flex-col w-full">
+        <label className="text-xs text-slate-600 mb-1">Customer Name</label>
+        <input
+          type="text"
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+          placeholder="Enter name"
+          className="w-full px-2 py-1.5 border rounded text-sm"
+        />
+      </div>
+
+      {/* WhatsApp Number */}
+      <div className="flex flex-col w-full">
+        <label className="text-xs text-slate-600 mb-1">WhatsApp Number</label>
+        <input
+          type="tel"
+          value={customerPhone}
+          onChange={(e) => setCustomerPhone(e.target.value)}
+          placeholder="+91 9XXXXXXXXX"
+          className="w-full px-2 py-1.5 border rounded text-sm"
+        />
+      </div>
+
+      {/* Payment Method */}
+      <div className="flex flex-col w-full">
+        <label className="text-xs text-slate-600 mb-1">Payment</label>
+        <select
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+          className="w-full px-2 py-1.5 border rounded text-sm"
+        >
+          <option value="">Select</option>
+          <option value="card">Card</option>
+          <option value="upi">UPI</option>
+          <option value="cash">Cash</option>
+        </select>
+      </div>
+    </div>
   </div>
 </div>
 
-    </div>
-
-    
-      </div>
-      {/* show close on small screens */}
+     
+     
       {!isLg && (
         <button onClick={() => setCartOpen(false)} className="ml-2 p-2 rounded border hover:bg-slate-50">
           <X />
