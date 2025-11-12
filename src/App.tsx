@@ -14,6 +14,7 @@ import Franchise from "@/pages/Franchise";
 import Customer from "@/pages/Customer";
 import CategoryWiseSale from "./pages/CategoryWiseSale";
 import StockVariation from "./pages/StockVariation";
+import TestingPos from "./pages/TestingPos"
 import NotFound from "@/pages/NotFound";
 import { AuthProvider } from "@/components/contexts/AuthContext";
 import { GstProvider } from "./components/contexts/gstContext";
@@ -149,7 +150,8 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardLayout>
                     {/* <Customer /> */}
-                     <TestPos/>
+                     {/* <TestPos/> */}
+                     <TestingPos/>
                   </DashboardLayout>
                 </ProtectedRoute>
               }
