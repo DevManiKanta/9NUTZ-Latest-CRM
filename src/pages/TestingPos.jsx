@@ -116,15 +116,12 @@ const BillingSummary = ({ itemCount, grossAmount, charges, discount, netAmount, 
   );
 };
 
-/* ---------------------------
-   BillingTable
-   --------------------------- */
 const BillingTable = ({ items }) => {
   return (
     <ScrollArea className="flex-1">
       <Table>
         <TableHeader>
-          <TableRow className="bg-table-header hover:bg-table-header">
+          <TableRow className="bg-table-header hover:bg-table-header bg-primary">
             <TableHead className="text-primary-foreground font-semibold w-12">No.</TableHead>
             <TableHead className="text-primary-foreground font-semibold">Item No.</TableHead>
             <TableHead className="text-primary-foreground font-semibold">Item Name</TableHead>
@@ -250,7 +247,7 @@ const TESTINGPOS = () => {
           <ProductGrid onProductSelect={handleProductSelect} />
 
           {/* Billing Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col" style={{border:"1px solid black"}}>
             {/* Search and Customer Info */}
             <div className="bg-card p-4 border-b space-y-3">
               <div className="grid grid-cols-2 gap-4">
