@@ -1381,7 +1381,6 @@ export default function TestProducts() {
     deleteAttribute,
   } = variantCtx || {};
 
-  /* -------------------- state (moved to top to avoid reference errors) -------------------- */
   // products, categories
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);

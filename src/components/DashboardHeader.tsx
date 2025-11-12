@@ -19,6 +19,8 @@ import { IMAGES } from "@/assets/Images";
 import { useAuth } from "@/components/contexts/AuthContext";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
+import api from "@/api/axios";
+import MainLogo from "@/assets/RayFog.jpeg";
 interface HeaderProps {
   onMenuToggle?: () => void;
   searchValue: string;
@@ -32,7 +34,7 @@ type TabItem = {
   Icon?: React.ComponentType<any>;
 };
 
-const API_BASE = "https://9nutsapi.nearbydoctors.in/public/api/"; // used only to build absolute URLs if slice returns relative paths
+const API_BASE = api.defaults.baseURL || "";
 
 const DashboardHeader: React.FC<HeaderProps> = ({ onMenuToggle, searchValue, onSearchChange }) => {
   const navigate = useNavigate();
@@ -41,7 +43,7 @@ const DashboardHeader: React.FC<HeaderProps> = ({ onMenuToggle, searchValue, onS
   // If you have RootState typed in your project, the line below is ideal.
   // If not, change to `useSelector((s: any) => s.sitesettings || {})`.
   const settings = useSelector((state: RootState | any) => (state as any).sitesettings || {});
-
+  //  console.log("Site Settings in Header:", settings);
   // Helpful debug: shows raw slice content in console so you can inspect when it's empty.
   useEffect(() => {
     if (!settings || Object.keys(settings).length === 0) {
@@ -191,20 +193,31 @@ const DashboardHeader: React.FC<HeaderProps> = ({ onMenuToggle, searchValue, onS
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
       {/* Left: Logo + Search */}
       <div className="flex items-center gap-4 flex-1 max-w-2xl" >
-        <div className="w-[80%] h-10 flex items-center justify-center overflow-hidden">
-          <img
-            src={logoSrc}
-            alt={siteName}
-            className="w-full h-full object-contain"
-            onError={(e) => {
-              const el = e.currentTarget as HTMLImageElement;
-              if (el.src !== IMAGES.Nutz) el.src = IMAGES.Nutz;
-            }}
-          />
-          <div className="flex items-baseline gap-5" style={{ marginLeft:5,width:"100%" }}>
-            <h1 className="text-lg font-bold">{routeLabel}</h1>
-          </div>
-        </div>
+        <div className="w-full h-12 flex items-center gap-3 overflow-hidden px-3">
+  {/* Logo */}
+  <img
+    src={logoSrc}
+    alt={siteName}
+    className="h-10 w-auto object-contain"
+    onError={(e) => {
+      const el = e.currentTarget as HTMLImageElement;
+      if (el.src !== IMAGES.Nutz) el.src = IMAGES.Nutz;
+    }}
+  />
+  {/* Text section */}
+  <div className="flex items-baseline gap-3 truncate">
+    {/* Highlighted site name */}
+    <h1 className="text-xl font-extrabold text-emerald-500 truncate">
+      {settings.site_name}
+    </h1>
+
+    {/* Route label (subtext) */}
+    <h3 className="text-base font-medium text-slate-600 truncate">
+      {routeLabel}
+    </h3>
+  </div>
+</div>
+
       </div>
       <div className="flex items-center gap-4">
         {/* Plus / quick tabs */}

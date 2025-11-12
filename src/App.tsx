@@ -150,8 +150,8 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardLayout>
                     {/* <Customer /> */}
-                     {/* <TestPos/> */}
-                     <TestingPos/>
+                     <TestPos/>
+                     {/* <TestingPos/> */}
                   </DashboardLayout>
                 </ProtectedRoute>
               }
